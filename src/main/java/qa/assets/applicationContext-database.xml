@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:sharding="http://shardingsphere.apache.org/schema/shardingsphere/sharding"
+       xmlns:shardingsphere="http://shardingsphere.apache.org/schema/shardingsphere/datasource"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans   http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+
+           http://www.springframework.org/schema/tx      http://www.springframework.org/schema/tx/spring-tx-4.0.xsd http://shardingsphere.apache.org/schema/shardingsphere/sharding http://shardingsphere.apache.org/schema/shardingsphere/sharding/sharding.xsd http://shardingsphere.apache.org/schema/shardingsphere/datasource http://shardingsphere.apache.org/schema/shardingsphere/datasource/datasource.xsd">
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <!--使用tomcat jdbc pool,仅读写库需要使用事务-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="shardingDataSource"/>
+    </bean>
+    <bean id="transactionUtil" class="com.xxx.common.utils.TransactionUtil"/>
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="shardingDataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <map key-type="java.lang.String" value-type="java.lang.String">
+                            <entry key="dialect" value="com.github.pagehelper.PageHelper"/>
+                        </map>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <bean id="sqlHelper" class="com.xxx.common.utils.SqlHelper"/>
+    <bean id="transactionTemplate" class="org.springframework.transaction.support.TransactionTemplate">
+        <property name="transactionManager" ref="transactionManager"/>
+    </bean>
+
+    <bean id="dataSource0" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="dataSource0">
+            <bean class="org.apache.tomcat.jdbc.pool.PoolProperties">
+                <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+                <property name="url" value="${com.xxx.datasource.url}"/>
+                <property name="username" value="${com.xxx.datasource.username}"/>
+                <property name="password" value="${com.xxx.datasource.password}"/>
+                <property name="initSQL" value="SET NAMES utf8mb4"/>
+                <property name="jmxEnabled" value="false"/>
+                <property name="testWhileIdle" value="false"/>
+                <property name="initialSize" value="30"/>
+                <property name="maxActive" value="60"/>
+                <property name="maxIdle" value="${com.xxx.datasource.maxIdle}"/>
+                <property name="minIdle" value="${com.xxx.datasource.minIdle}"/>
+                <!--                <property name="defaultAutoCommit" value="false"/>-->
+                <property name="maxWait" value="1500"/>
+                <property name="removeAbandoned" value="true"/>
+                <property name="removeAbandonedTimeout" value="60"/>
+                <property name="testOnBorrow" value="true"/>
+                <property name="testOnReturn" value="false"/>
+                <property name="validationQuery" value="SELECT 1"/>
+                <property name="validationInterval" value="60000"/>
+                <property name="validationQueryTimeout" value="3"/>
+                <property name="timeBetweenEvictionRunsMillis" value="300000"/>
+                <property name="minEvictableIdleTimeMillis" value="1800000"/>
+                <property name="jdbcInterceptors"
+                          value="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.xxx.coupon.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+
+    <bean id="readonlyDataSource0" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+        <property name="poolProperties">
+            <bean class="org.apache.tomcat.jdbc.pool.PoolProperties">
+                <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+                <property name="url" value="${com.xxx.datasource.readonly.url}"/>
+                <property name="username" value="${com.xxx.datasource.readonly.username}"/>
+                <property name="password" value="${com.xxx.datasource.readonly.password}"/>
+                <property name="jmxEnabled" value="false"/>
+                <property name="testWhileIdle" value="false"/>
+                <property name="initialSize" value="5"/>
+                <property name="maxActive" value="60"/>
+                <property name="maxIdle" value="30"/>
+                <property name="minIdle" value="15"/>
+                <!--                <property name="defaultAutoCommit" value="false"/>-->
+                <property name="maxWait" value="5000"/>
+                <property name="removeAbandoned" value="true"/>
+                <property name="removeAbandonedTimeout" value="60"/>
+                <property name="testOnBorrow" value="true"/>
+                <property name="testOnReturn" value="false"/>
+                <property name="validationQuery" value="SELECT 1"/>
+                <property name="validationInterval" value="60000"/>
+                <property name="validationQueryTimeout" value="3"/>
+                <property name="timeBetweenEvictionRunsMillis" value="300000"/>
+                <property name="minEvictableIdleTimeMillis" value="1800000"/>
+                <property name="jdbcInterceptors"
+                          value="org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="readonlySqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="readOnlyShardingDataSource"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <map key-type="java.lang.String" value-type="java.lang.String">
+                            <entry key="dialect" value="com.github.pagehelper.PageHelper"/>
+                        </map>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+
+    <bean id="customerCouponReadonlyMapper" class="org.mybatis.spring.mapper.MapperFactoryBean">
+        <property name="sqlSessionFactory" ref="readonlySqlSessionFactory"/>
+        <property name="mapperInterface" value="com.xxx.coupon.dao.readonlyMapper.CustomerCouponReadonlyMapper"/>
+    </bean>
+
+    <!-- prometheus agent begin-->
+    <bean id="prometheusAgent" class="com.xxx.prometheusagent.PrometheusAgent" init-method="startAgent"
+          destroy-method="closeAgent" lazy-init="false">
+        <property name="elementsConfig">
+            <bean class="com.xxx.prometheusagent.PrometheusElementsConfig">
+                <property name="redisPoolOpened" value="true"/>
+                <property name="tomcatJdbcDatasource">
+                    <list>
+                        <ref bean="dataSource0"/>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
+    <!-- prometheus agent end-->
+
+    <!-- sharding start -->
+
+    <!-- 配置分库策略 -->
+    <sharding:sharding-algorithm id="customerCouponDBShardingAlgorithm" type="CLASS_BASED">
+        <props>
+            <prop key="strategy">COMPLEX</prop>
+            <prop key="algorithmClassName">
+                com.xxx.coupon.service.sharing.strategy.CustomerCouponDBComplexShardingAlgorithm
+            </prop>
+        </props>
+    </sharding:sharding-algorithm>
+    <sharding:complex-strategy id="customerCouponDBStrategy" sharding-columns="user_coupon_id, customer_id"
+                               algorithm-ref="customerCouponDBShardingAlgorithm"/>
+
+    <!-- 配置表分片策略 -->
+    <sharding:sharding-algorithm id="customerCouponTBShardingAlgorithm" type="CLASS_BASED">
+        <props>
+            <prop key="strategy">COMPLEX</prop>
+            <prop key="algorithmClassName">
+                com.xxx.coupon.service.sharing.strategy.CustomerCouponTBComplexShardingAlgorithm
+            </prop>
+        </props>
+    </sharding:sharding-algorithm>
+    <sharding:complex-strategy id="customerCouponTBStrategy" sharding-columns="user_coupon_id, customer_id"
+                               algorithm-ref="customerCouponTBShardingAlgorithm"/>
+
+    <!-- 配置分布式id生成策略 -->
+    <!--    <sharding:key-generate-algorithm id="userCouponIdGenerateAlgorithm" type="USER_COUPON_ID_MEMORY_DAY_RANDOM_GENERATOR"/>-->
+    <!--    <sharding:key-generate-algorithm id="userCouponIdGenerateAlgorithm" type="USER_COUPON_ID_MEMORY_HOUR_RANDOM_GENERATOR"/>-->
+    <!--    <sharding:key-generate-algorithm id="userCouponIdGenerateAlgorithm" type="USER_COUPON_ID_MEMORY_SEQUENCE_GENERATOR"/>-->
+    <sharding:key-generate-algorithm id="userCouponIdGenerateAlgorithm" type="USER_COUPON_ID_REDIS_GENERATOR"/>
+    <sharding:key-generate-strategy id="userCouponIdGenerator" column="user_coupon_id"
+                                    algorithm-ref="userCouponIdGenerateAlgorithm"/>
+
+    <!-- 配置sharding策略 -->
+    <sharding:rule id="customerCouponShardingRule">
+        <sharding:table-rules>
+            <sharding:table-rule logic-table="xxx_customer_coupon"
+                                 actual-data-nodes="dataSource${0..0}.xxx_customer_coupon${0..15}"
+                                 database-strategy-ref="customerCouponDBStrategy"
+                                 table-strategy-ref="customerCouponTBStrategy"
+                                 key-generate-strategy-ref="userCouponIdGenerator"/>
+        </sharding:table-rules>
+    </sharding:rule>
+
+    <!-- 配置ShardingSphereDataSource -->
+    <shardingsphere:data-source id="shardingDataSource" data-source-names="dataSource0"
+                                rule-refs="customerCouponShardingRule">
+        <props>
+            <!-- 所有支持的配置：org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey-->
+            <!--                        <prop key="sql-show">true</prop>-->
+            <!--             <prop key="check-duplicate-table-enabled">true</prop>-->
+            <!-- <prop key="sql-simple">true</prop>-->
+        </props>
+    </shardingsphere:data-source>
+
+    <!-- 配置从库策略 -->
+    <sharding:rule id="readOnlyCustomerCouponShardingRule">
+        <sharding:table-rules>
+            <sharding:table-rule logic-table="xxx_customer_coupon"
+                                 actual-data-nodes="readonlyDataSource${0..0}.xxx_customer_coupon${0..15}"
+                                 database-strategy-ref="customerCouponDBStrategy"
+                                 table-strategy-ref="customerCouponTBStrategy"
+                                 key-generate-strategy-ref="userCouponIdGenerator"/>
+        </sharding:table-rules>
+    </sharding:rule>
+
+    <!-- 配置从库ShardingSphereDataSource -->
+    <shardingsphere:data-source id="readOnlyShardingDataSource" data-source-names="readonlyDataSource0"
+                                rule-refs="readOnlyCustomerCouponShardingRule">
+        <props>
+            <!-- 所有支持的配置：org.apache.shardingsphere.infra.config.properties.ConfigurationPropertyKey-->
+            <!--            <prop key="sql-show">true</prop>-->
+            <!--             <prop key="check-duplicate-table-enabled">true</prop>-->
+            <!-- <prop key="sql-simple">true</prop>-->
+        </props>
+    </shardingsphere:data-source>
+    <!-- sharding end -->
+
+</beans>
