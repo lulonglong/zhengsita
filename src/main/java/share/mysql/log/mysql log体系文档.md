@@ -17,29 +17,29 @@
 	Mysql 架构
 	1.binlog属于Server这层    
 	2.redo log属于存储引擎层，并且是InnoDB存储引擎独有的      
-![alt mysql 逻辑架构](https://pic1.zhimg.com/80/v2-7d3fe6e3e961f850654632d2e51a04fc_1440w.jpg)
+![alt mysql 逻辑架构](../assets/v2-7d3fe6e3e961f850654632d2e51a04fc_1440w.png)
 
 
 	存储引擎职责
 	1.数据是从内存查还是从硬盘查    
 	2.数据是更新在内存，还是硬盘    
 	3.内存的数据什么时候同步到硬盘        
-![alt 存储引擎职责](https://pic1.zhimg.com/80/v2-8bc31eea0854985ecc884cdd44b0c2f0_1440w.jpg)
+![alt 存储引擎职责](../assets/v2-8bc31eea0854985ecc884cdd44b0c2f0_1440w.png)
 
 	存储引擎数据层
 	1.MySQL表数据是以页为单位，查询一条记录会从硬盘中把一页的数据加载出来，加载出来的数据叫数据页，会放入到 Buffer Pool 中，每个数据页16KB    
 	2.缓冲池（Buffer Pool）里面会缓存很多的数据，比如数据页、索引页、锁信息等等    
 	3.后续的查询先从 Buffer Pool 中找，没有命中再去硬盘加载，减少硬盘 IO 开销，提升性能     
-![alt 存储引擎数据层](https://pic4.zhimg.com/80/v2-a47c66d7fde62873ec1c5f62daaae1bf_1440w.jpg)
+![alt 存储引擎数据层](../assets/v2-a47c66d7fde62873ec1c5f62daaae1bf_1440w.png)
 
 	Mysql数据页  
-
+	
 	为了避免一条一条读取磁盘数据，InnoDB采取页的方式，作为磁盘和内存之间交互的基本单位，一个页的大小一般是16KB。  
 	
 	InnoDB为了不同的目的而设计了多种不同类型的页。
-    比如：存放表空间头部信息的页、存放undo日志信息的页等等。我们把存放表中数据记录的页，称为索引页or数据页  
+	比如：存放表空间头部信息的页、存放undo日志信息的页等等。我们把存放表中数据记录的页，称为索引页or数据页  
 
-![alt 数据页](https://mmbiz.qpic.cn/mmbiz_png/AZHyCoMMOC8wv6zgWc2pJM6QFTqWAfzBNATXjz9ZqFBxaTDC6ZvjI64dFicA1xwdnWfVWG3QMj1w4xkchCvcPEg/640?wx_fmt=png&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+![alt 数据页](../assets/数据页.png)
 
 ***
 
@@ -49,11 +49,11 @@
 	确保事务的持久性，防止在发生故障的时间点，尚有脏页未写入磁盘，用于宕机恢复  
 
 > redo log解决什么问题？      
-![alt 增加Buffer Pool带来的问题](https://pic4.zhimg.com/80/v2-3825e62baf2fa679a0d1636421ceb18f_1440w.jpg)
+![alt 增加Buffer Pool带来的问题](../assets/v2-3825e62baf2fa679a0d1636421ceb18f_1440w.png)
 
 > 用redo log解决问题      
-![alt 存储redo log](https://pic2.zhimg.com/80/v2-f07455aef0c71e6446ef05ef9ce67ded_1440w.jpg)
-![alt redo log的作用](https://pic3.zhimg.com/80/v2-51607a59ad0ce45b630a62144d9e1852_1440w.jpg)
+![alt 存储redo log](../assets/v2-f07455aef0c71e6446ef05ef9ce67ded_1440w.png)
+![alt redo log的作用](../assets/v2-51607a59ad0ce45b630a62144d9e1852_1440w.png)
 
 > redo log的刷盘时机      
 > InnoDB存储引擎为redo log的刷盘策略提供了innodb_flush_log_at_trx_commit参数，它支持三种策略
@@ -65,12 +65,12 @@
 >	- 仅在服务器宕机时会丢失1秒钟数据，因为数据已经刷新到了系统文件缓存  
 
 >另外InnoDB存储引擎有一个后台线程，每隔1秒，就会把redo log buffer中的内容写到文件系统缓存（page cache），然后调用fsync刷盘。        
-![alt 后台线程](https://pic3.zhimg.com/80/v2-e466e33bf61b4c5b70745685da3b376e_1440w.jpg)
+![alt 后台线程](../assets/v2-e466e33bf61b4c5b70745685da3b376e_1440w.png)
 
 >三种配置的刷盘时机       
-![alt 设置为0时](https://pic3.zhimg.com/80/v2-2abf4716c88e1cb6020a21f6d441cca2_1440w.jpg)
-![alt 设置为1时](https://pic1.zhimg.com/80/v2-0181ad11442ef502210aeec8856f4fd8_1440w.jpg)
-![alt 设置为2时](https://pic3.zhimg.com/80/v2-b1cfa7cae61b0917365acb7026e11a0e_1440w.jpg)
+![alt 设置为0时](../assets/v2-2abf4716c88e1cb6020a21f6d441cca2_1440w.png)
+![alt 设置为1时](../assets/v2-0181ad11442ef502210aeec8856f4fd8_1440w.png)
+![alt 设置为2时](../assets/v2-b1cfa7cae61b0917365acb7026e11a0e_1440w.png)
 
 
 **※延伸思考，当能够简单的解决问题时就不要增加不必要的东西，一个东西的加入可能带来几个补丁的加入，系统复杂度会直线飙升。当然这里的redo log是值得的**  
@@ -83,7 +83,7 @@
 >- DB_ROW_ID：如果没有为表显式的定义主键，并且表中也没有定义唯一索引，那么InnoDB会自动为表添加一个row_id的隐藏列作为主键	
 >- DB_TRX_ID：事务中对某条记录做增删改时，就会将这个事务的事务ID写入trx_id中
 >- DB_ROLL_PTR：回滚指针，本质上就是指向 undo log 的指针     
-![alt 行记录隐藏列](https://pic2.zhimg.com/80/v2-a826df0e397e721feb8304a11c14b669_1440w.png)	
+![alt 行记录隐藏列](../assets/v2-a826df0e397e721feb8304a11c14b669_1440w.png)	
 
 	undo log类型		
 - TRX_UNDO_INSERT_REC（insert undo）：需要记录INSERT这行数据的主键ID信息，或者唯一列信息      
@@ -91,7 +91,7 @@
 ```mysql
 INSERT INTO account(id,card,balance) VALUES (1, 'AA', 0),(2, 'BB', 0);
 ```
->![alt insert undo log图示](https://pic1.zhimg.com/80/v2-1b0185d3223d18b422576230cfecd130_1440w.jpg)  
+>![alt insert undo log图示](../assets/v2-1b0185d3223d18b422576230cfecd130_1440w.png)  
 
 - TRX_UNDO_DEL_MARK_REC（delete undo）    
 >1. 首先是用户线程执行删除时，会先将记录头信息中的 delete_mask 标记为 1，而不是直接从页中删除，因为可能其它并发的事务还需要读取这条数据  
@@ -101,7 +101,7 @@ INSERT INTO account(id,card,balance) VALUES (1, 'AA', 0),(2, 'BB', 0);
 INSERT INTO account(id,card,balance) VALUES (1, 'AA', 0),(2, 'BB', 0);
 DELETE FROM account WHERE id = 2;
 ```
->![alt delete undo log图示](https://pic1.zhimg.com/80/v2-908138bd51df0e3f6c6b55de5ac65fb4_1440w.jpg)  
+>![alt delete undo log图示](../assets/v2-908138bd51df0e3f6c6b55de5ac65fb4_1440w.png)  
 
 - TRX_UNDO_UPD_EXIST_REC（update undo）：根据是否更新主键分为了两种情况，不更新主键和更新主键  
 
@@ -116,7 +116,7 @@ INSERT INTO account(id,card,balance) VALUES (1, 'AA', 0),(2, 'BB', 0);
 DELETE FROM account WHERE id = 2;
 UPDATE account SET card = 'CC' WHERE id = 1;
 ```
->![alt update undo log 不更新主键 图示](https://pic2.zhimg.com/80/v2-eacc70e60a5a3f38636ad465e84bd5ad_1440w.jpg)  
+>![alt update undo log 不更新主键 图示](../assets/v2-eacc70e60a5a3f38636ad465e84bd5ad_1440w.png)  
 
 ***
 
@@ -131,7 +131,7 @@ DELETE FROM account WHERE id = 2;
 UPDATE account SET card = 'CC' WHERE id = 1;
 UPDATE account SET id = 3 WHERE id = 1;
 ````
->![alt update undo log 更新主键 图示](https://pic1.zhimg.com/80/v2-5704d410e0fc529a7b955a07fa520f24_1440w.jpg)
+>![alt update undo log 更新主键 图示](../assets/v2-5704d410e0fc529a7b955a07fa520f24_1440w.png)
 
     undo log 回滚  
 >前面在一个事务中增删改产生的一系列 undo log，都有 undo no 编号的。在回滚的时候，就可以应用这个事务中的 undo log，根据 undo no 从大到小开始进行撤销操作。
@@ -174,7 +174,7 @@ UPDATE account SET id = 3 WHERE id = 1;
 
 	中继日志用于主从复制架构中的从服务器上，从服务器的 slave 进程从主服务器处获取二进制日志的内容并写入中继日志，然后由 IO 进程读取并执行中继日志中的语句
 
-![alt relay log 图示](https://mmbiz.qpic.cn/mmbiz_jpg/ibBMVuDfkZUm5Fx2DiaicuRtX4oRzLJQJeHXCKOPJNNybtFCsCVCNTJ5icic7oDCbMbhRoFddBrVDUHEJwCpLicSibib2g/640?wx_fmt=jpeg&tp=webp&wxfrom=5&wx_lazy=1&wx_co=1)
+![alt relay log 图示](../assets/relaylog.png)
 
 1. Master收到客户端请求语句，在语句结束之前向二进制日志写入一条记录，可能包含多个事件  
 2. 此时，一个Slave连接到Master，Master的dump线程从binlog读取日志并发送到Slave的IO线程  

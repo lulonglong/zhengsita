@@ -11,8 +11,8 @@
 对象A获得依赖对象B的过程，由主动行为变为了被动行为，”控制权“颠倒过来了，这就是“控制反转”这个名称的由来。哪些方面的控制被反转了呢？获得"依赖对象的过程"被反转了。控制被反转之后，获得依赖对象的过程由自身管理变为了由IOC容器主动注入。于是，可以给“控制反转”取一个更合适的名字叫做“依赖注入“。
 所以，依赖注入(DI)和控制反转(IOC)是从不同的角度的描述的同一件事情，就是指通过引入IOC容器，利用依赖关系注入的方式，实现对象之间的解耦。
 ```
-![alt](https://img-blog.csdnimg.cn/d737d7c75749465da206ed7c4f06c061.png)
-![alt](https://img-blog.csdnimg.cn/564a2e2fff9347a6a72cbfafd622a90d.png)
+ ![alt](assets/d737d7c75749465da206ed7c4f06c061.png)
+ ![alt](assets/ioc.png)
 
 3. BeanFactory和FactoryBean的区别
 ```
@@ -45,7 +45,7 @@ BeanPostProcessor常用子类：
 InstantiationAwareBeanPostProcessor：实例化前后的处理
 MergedBeanDefinitionPostProcessor：实例化时对bd的进一步丰富，@Autowired的应用
 ```
- ![alt](https://image-static.segmentfault.com/347/041/3470413121-2abed99e085c254a)
+ ![alt](assets/3470413121-2abed99e085c254a.png)
 
 7. BeanFactoryPostProcessor是干嘛的，有哪些应用场景
 ```
@@ -82,7 +82,7 @@ BeanNameAware让实现类感知并拿到BeanName
 简单来说，Spring Bean的生命周期只有四个阶段：
 实例化 Instantiation --> 属性赋值 Populate  --> 初始化 Initialization（执行初始化方法、执行BeanPostProcessor）  --> 销毁 Destruction
 ```
- ![alt](https://img-blog.csdnimg.cn/img_convert/84341632e9df3625a91c3e2a1437ee65.png)
+ ![alt](assets/84341632e9df3625a91c3e2a1437ee65.png)
 
 11. Spring中bean的作用域
 
@@ -132,7 +132,10 @@ Bean的创建过程会把实例化后的Bean通过ObjectFactory预先暴露出�
 	1.优先从singletonObjects缓存中获取已创建的Bean
 	2.通过earlySingletonObjects获取早期实例
 	3.通过singletonFactory暴露，这时候是个ObjectFactory对象，get到对象后缓存到earlySingletonObjects中（第二级缓存）
-	
+
+为什么要有第三级缓存？
+整个Bean的创建过程是，①创建Bean对象本身②设置属性③代理对象，之所以有第三级缓存就是因为最终暴露的对象可能是代理对象而不是Bean对象本身，所以只能用singletonFactory暴露，把检查是否创建代理对象的逻辑放在singletonFactory的getObject逻辑里，确保最终暴露出去的都是代理对象
+
 由于是把实例化后的Bean通过ObjectFactory预先暴露出来，所以如果是构造函数的循环依赖并未解决。A-》B-》A，因为整个依赖过程A的构造函数并未执行完，所以实例也就提前暴露不了
 ```
 
@@ -211,7 +214,7 @@ Spring 中有这么3种依赖注入的方式
 		直译：面向切面编程。
 		把代码塞到若干处执行，这散乱的若干处连起来犹如一个面，把编码关注点放到这个面上就叫面向切面编程。更通俗的解释是“写拦截器”，目的是把关注点剥离，使主体业务流程更聚焦
 ```
- ![alt](https://pics3.baidu.com/feed/80cb39dbb6fd5266d7c5c32d3d06e223d50736c7.png@f_auto?token=d2756a3d7daf1bc4eba3c4efba4b639a)
+ ![alt](assets/80cb39dbb6fd5266d7c5c32d3d06e223d50736c7.png@f_auto.png)
 
 2. 连接点（Join point）、切点（Pointcut）、切面（Aspect）、通知（Advice）分别是什么意思？
 ```
@@ -229,7 +232,7 @@ Aspect：对切点和增强的整体定义作为一个完整的切面定义
 ```
 
 4. Advice类型有哪些？
- ![alt](https://img-blog.csdnimg.cn/2020120700443256.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2E3NDUyMzM3MDA=,size_16,color_FFFFFF,t_70)
+ ![alt](assets/advice类型.png)
 
 5. Advice的执行顺序
 ```
@@ -274,7 +277,7 @@ Aspect：对切点和增强的整体定义作为一个完整的切面定义
 ```
 spring事务的传播机制说的是，当多个事务同时存在的时候，spring如何处理这些事务的行为。事务传播机制实际上是使用简单的ThreadLocal实现的，所以，如果调用的方法是在新线程调用的，事务传播实际上是会失效的。
 ```
- ![alt 事务传播机制](https://asset-stage.yit.com/URDM/be0dcbd60e9c67ef1047f0614dff8770_673X909.jpeg)
+ ![alt 事务传播机制](assets/事务传播机制.png)
 
 3. Spring提供的事务隔离级别和数据库提供的事务隔离级别是什么关系，两者不一致时会怎样
 ```

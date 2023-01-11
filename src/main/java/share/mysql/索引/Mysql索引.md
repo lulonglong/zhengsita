@@ -20,13 +20,13 @@
 阶：所有节点的可能最大度数
 叶子结点：就是没有分叉的节点，严格的定义是度为 0 的节点叫叶子节点。图中的3也是叶子结点
 ```
-![alt](https://mmbiz.qpic.cn/mmbiz_png/WTVRamfic2vNu8vEDXvA3eH6so7n0ic9KFoYqP07EFxSoE9P3m8yk6TBLTicm2iblrvq3V3sEWup292ibib2NabLbdyw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+ ![alt](../assets/树的度.png)
 
 ## 二叉树
 ```
 二叉树中每个节点的度不大于 2 ，即它的每个节点最多只有两个分支，通常称二叉树节点的左右两个分支为左右子树
 ```
-![alt](https://mmbiz.qpic.cn/mmbiz_png/WTVRamfic2vNu8vEDXvA3eH6so7n0ic9KFoBbq07TK5kQ55LiaTtZiaXFySKQppicOCYusNnqGClJ3bMgE11SN9ibElQ/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+![alt](../assets/二叉树.png)
 三种遍历方式
 
 - 前序遍历：根节点->左子树->右子树
@@ -45,7 +45,7 @@
 
 查找二叉树理解了也不难，简单来说就是二叉树上所有节点的左子树上的节点都小于根节点，右子树上所有节点的值都大于根节点。
 ```
-![alt](https://mmbiz.qpic.cn/mmbiz_png/WTVRamfic2vNu8vEDXvA3eH6so7n0ic9KFAaVZ7hoiaVicSUkNDahLicN8T3Y8mYjCKKibsagBt1jk007Z3ImAs33hDg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+ ![alt](../assets/查找二叉树.png)
 ## 平衡二叉树（AVL树）
 ```
 二叉查找树的查询复杂度取决于目标节点的深度，因此当节点的深度比较大时，最坏的查询效率是O(n)，其中n是树中的节点个数
@@ -56,7 +56,7 @@
 
 AVL 这个名字的由来，是它的两个发明者G. M. Adelson-Velsky 和 Evgenii Landis 的缩写，AVL最初是他们两人在1962 年的论文「An algorithm for the organization of information」中提出来一种数据结构
 ```
-![alt](https://mmbiz.qpic.cn/mmbiz_png/WTVRamfic2vNu8vEDXvA3eH6so7n0ic9KFpNLsZo2rEPZIZibf9G13ZXjZ6o3DwrPmrs6hE1NxqEiaW4TZ8yicLyMdA/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+![alt](../assets/平衡二叉树.png)
 
 ```
 左旋与右旋
@@ -64,7 +64,7 @@ AVL 这个名字的由来，是它的两个发明者G. M. Adelson-Velsky 和 Evg
 右旋：假设旋转树的根节点是R，将根节点的左子树指向其原左子树的右子树，再将其原左子树的右子树指向R
 🌲下图以右旋举例
 ```
-![alt](https://img-blog.csdnimg.cn/b9ef4199a47843e499c97ac8e4ed6264.png)
+![alt](../assets/平衡二叉树重排.png)
 ![alt](https://img-blog.csdnimg.cn/e5489213aee94d5389983730edcae4c3.png)
 
 ```
@@ -97,7 +97,7 @@ B树节点可以保存多个数据，使得 B 树可以不用像 AVL 树那样�
 B树的多路的特性，降低了树的高度，所以B树相比于平衡二叉树显得矮胖很多。
 B树非常适合保存在磁盘中的数据读取，因为每次读取都会有一次磁盘IO，高度降低减少了磁盘IO的次数
 ```
-![alt](https://mmbiz.qpic.cn/mmbiz_png/WTVRamfic2vNu8vEDXvA3eH6so7n0ic9KFOUibK0jTucthm56ae2pQibzyvHpP2WlPmOTfPcye8Gic2sUmqPhsWSoDw/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+ ![alt](../assets/B树.png)
 
 ```
 B树的插入操作：假设插入关键字为k
@@ -136,7 +136,7 @@ B+树在B树的基础上做了改进
 1.由于B+树在节点上不包含数据信息，因此在内存页中能够存放更多的key。 数据存放的更加紧密，具有更好的空间局部性。因此访问叶子节点上关联的数据也具有更好的缓存命中率
 2.B+树的叶子结点都是相链的，因此对整棵树的便利只需要一次线性遍历叶子结点即可。而且由于数据顺序排列并且相连，所以便于区间查找和搜索。而B树则需要进行每一层的递归遍历。相邻的元素可能在内存中不相邻，所以缓存命中性没有B+树好
 ```
-![alt](https://img-blog.csdnimg.cn/img_convert/17ca89065345668054177d8ada3abf54.png)
+ ![alt](../assets/17ca89065345668054177d8ada3abf54.png)
 
 ## 参考文档
 [Mysql索引：图文并茂，深入探究索引的原理和使用](https://zhuanlan.zhihu.com/p/335734145)
