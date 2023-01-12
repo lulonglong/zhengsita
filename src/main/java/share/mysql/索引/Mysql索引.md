@@ -4,7 +4,7 @@
 ```
 索引是数据库为了加快查询效率引入的一种存储结构。Innodb使用B+树来实现索引，后续我们逐步介绍B+树。在此之前先了解数据结构的大致分类，数据结构分为线性结构和非线性结构
 线性结构包括：有数组、队列、链表和栈
-非线性结构包括：二维数组、多维数组、广义表、树结构、图结构
+非线性结构包括：set、map、二维数组、多维数组、广义表、树结构、图结构
 ```
 
 ## 树
@@ -60,14 +60,16 @@ AVL 这个名字的由来，是它的两个发明者G. M. Adelson-Velsky 和 Evg
 
 ```
 左旋与右旋
-左旋：假设旋转树（把需要旋转的子树拎出来单独看）的根节点是R，将根节点的右子树指向其原右子树的左子树，再将其原右子树的左子树指向R
 右旋：假设旋转树的根节点是R，将根节点的左子树指向其原左子树的右子树，再将其原左子树的右子树指向R
+左旋：假设旋转树（把需要旋转的子树拎出来单独看）的根节点是R，将根节点的右子树指向其原右子树的左子树，再将其原右子树的左子树指向R
 🌲下图以右旋举例
 ```
 ![alt](../assets/平衡二叉树重排.png)
 ![alt](https://img-blog.csdnimg.cn/e5489213aee94d5389983730edcae4c3.png)
 
 ```
+※参考文档中有<数据结构可视化网站>，可以找到对应的数据结构进行插入删除操作，观察节点移动过程
+
 插入操作：
 当插入节点导致不平衡，则从不平衡子树的根节点开始向插入节点的父节点（被插入节点）路由
 🌲如果是左子树左子树(LL)到达，则对不平衡子树进行右旋(R)
@@ -146,3 +148,4 @@ B+树在B树的基础上做了改进
 [数据结构可视化网站](https://www.cs.usfca.edu/~galles/visualization/Algorithms.html)
 [你心里是没点B树吗？](https://mp.weixin.qq.com/s?src=11&timestamp=1663313242&ver=4047&signature=5AOr8SfAgvQA5X5ITR4gKvtbg2-dfsXfkX4jyXkfF*z2MFzCYZ7zC11hNf*uaAmFCoFnMY1Cz8*TPUYAL*He9vqYSSzq4R6FIjpkvzuwAQ1yrSUb2l8xWGvcRbfK03MG&new=1)
 [AVL树的插入](https://blog.csdn.net/LiangXiay/article/details/125024480)
+
