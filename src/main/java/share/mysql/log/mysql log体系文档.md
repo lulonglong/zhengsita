@@ -3,12 +3,12 @@
 ## log类型
 - errorlog（错误日志）：记录着 mysqld 启动和停止，以及服务器在运行过程中发生的错误及警告相关信息
 - slow query log（慢查询日志）：用来记录执行时间超过 long_query_time 这个变量定义的时长的查询语句
-- general log（通用查询日志）：是 MySQL 中记录最详细的日志。默认情况下是关掉的
+- general log（通用查询日志）：是 MySQL 中记录最详细的日志，会记录所有的查询语句。默认情况下是关掉的。在很难定位到sql问题时，可以短暂开启查看查询的sql内容，之后再关掉
 - redo log（重做日志）：确保事务的持久性，防止在发生故障的时间点，尚有脏页未写入磁盘     
     - 脏页：当内存数据页和磁盘数据页上的内容不一致时,我们称这个内存页为脏页  
-- undo log（回滚日志）：保存了事务发生之前的数据的一个版本，可以用于回滚
+- undo log（回滚日志）：保存了事务发生之前的数据的一个版本，可以用于回滚，确保了事务的原子性
     - undo log是存在于内存中的，不会进行刷盘
-- binlog（归档日志）：记录了数据库所有执行的DDL和DML语句（除了数据查询语句select、show等），以事件形式记录并保存在二进制文件中。常用于数据恢复和主从复制
+- binlog（归档日志）：记录了数据库所有执行的DDL和DML语句（除了数据查询语句select、show等，而general log会记录所有的），以事件形式记录并保存在二进制文件中。常用于数据恢复和主从复制
 - relay log（中继日志）：中继日志用于主从复制架构中的从服务器上，从服务器的 slave 进程从主服务器处获取二进制日志的内容并写入中继日志，然后由 IO 进程读取并执行中继日志中的语句
 
 ***
@@ -17,20 +17,22 @@
 	Mysql 架构
 	1.binlog属于Server这层    
 	2.redo log属于存储引擎层，并且是InnoDB存储引擎独有的      
-![alt mysql 逻辑架构](../assets/v2-7d3fe6e3e961f850654632d2e51a04fc_1440w.png)
+ ![alt mysql 逻辑架构](../assets/v2-7d3fe6e3e961f850654632d2e51a04fc_1440w.png)
 
 
 	存储引擎职责
 	1.数据是从内存查还是从硬盘查    
 	2.数据是更新在内存，还是硬盘    
 	3.内存的数据什么时候同步到硬盘        
-![alt 存储引擎职责](../assets/v2-8bc31eea0854985ecc884cdd44b0c2f0_1440w.png)
+ ![alt 存储引擎职责](../assets/v2-8bc31eea0854985ecc884cdd44b0c2f0_1440w.png)
 
 	存储引擎数据层
 	1.MySQL表数据是以页为单位，查询一条记录会从硬盘中把一页的数据加载出来，加载出来的数据叫数据页，会放入到 Buffer Pool 中，每个数据页16KB    
-	2.缓冲池（Buffer Pool）里面会缓存很多的数据，比如数据页、索引页、锁信息等等    
-	3.后续的查询先从 Buffer Pool 中找，没有命中再去硬盘加载，减少硬盘 IO 开销，提升性能     
-![alt 存储引擎数据层](../assets/v2-a47c66d7fde62873ec1c5f62daaae1bf_1440w.png)
+	2.缓冲池（Buffer Pool）里面会缓存很多的数据，比如数据页、索引页、锁信息等等。    
+	3.后续的查询先从 Buffer Pool 中找，没有命中再去硬盘加载，减少硬盘 IO 开销，提升性能  
+	
+	缓冲池的刷盘时机：脏页的数量达到了 Buffer Pool 中页数量的 10%，就会触发将 Flush 链表中的脏页刷入磁盘
+ ![alt 存储引擎数据层](../assets/v2-a47c66d7fde62873ec1c5f62daaae1bf_1440w.png)
 
 	Mysql数据页  
 	
@@ -39,7 +41,7 @@
 	InnoDB为了不同的目的而设计了多种不同类型的页。
 	比如：存放表空间头部信息的页、存放undo日志信息的页等等。我们把存放表中数据记录的页，称为索引页or数据页  
 
-![alt 数据页](../assets/数据页.png)
+ ![alt 数据页](../assets/数据页.png)
 
 ***
 
@@ -53,31 +55,41 @@
 
 > 用redo log解决问题      
 ![alt 存储redo log](../assets/v2-f07455aef0c71e6446ef05ef9ce67ded_1440w.png)
-![alt redo log的作用](../assets/v2-51607a59ad0ce45b630a62144d9e1852_1440w.png)
+ ![alt redo log的作用](../assets/v2-51607a59ad0ce45b630a62144d9e1852_1440w.png)
 
-> redo log的刷盘时机      
-> InnoDB存储引擎为redo log的刷盘策略提供了innodb_flush_log_at_trx_commit参数，它支持三种策略
->- 设置为0的时候，表示每次事务提交时不进行刷盘操作  
->    - 当mysql崩溃或者宕机会丢失1秒钟数据
->- 设置为1的时候，表示每次事务提交时都将进行刷盘操作（默认值）  
+> redo log的刷盘时机
+> redo log也是先放缓存，后续再刷盘，InnoDB存储引擎为redo log的刷盘策略提供了innodb_flush_log_at_trx_commit参数，它支持三种策略（另外，在redo log buffer空间不足、脏页刷盘时、做checkpoint时也会触发redo log刷盘）
+>
+> - 设置为0的时候，表示每次事务提交时不进行刷盘操作  
+>    - 当mysql崩溃或者宕机会丢失1秒钟数据（为什么是1秒，接着往下看）
+> - 设置为1的时候，表示每次事务提交时都将进行刷盘操作（默认值）  
 >    - 当mysql崩溃或者宕机不会丢失数据
->- 设置为2的时候，表示每次事务提交时都只把redo log buffer内容写入page cache    
->	- 仅在服务器宕机时会丢失1秒钟数据，因为数据已经刷新到了系统文件缓存  
+> - 设置为2的时候，表示每次事务提交时都只把redo log buffer内容写入page cache（这玩意是操作系统接管的，不属于mysql控制的范围，只要系统不宕机就没事）   
+> 	- 仅在服务器宕机时会丢失1秒钟数据，因为数据已经刷新到了系统文件缓存  
+```
+什么是页缓存（Page Cache，对应内存区域）
+		我们知道文件一般存放在硬盘（机械硬盘或固态硬盘）中，CPU 并不能直接访问硬盘中的数据，而是需要先将硬盘中的数据读入到内存中，然后才能被 CPU 访问。
+		由于读写硬盘的速度比读写内存要慢很多（DDR4 内存读写速度是机械硬盘500倍，是固态硬盘的200倍），所以为了避免每次读写文件时，都需要对硬盘进行读写操作，Linux 内核使用页缓存（Page Cache）机制来对文件中的数据进行缓存。
+		为了提升对文件的读写效率，Linux 内核会以页大小（4KB）为单位，将文件划分为多数据块。当用户对文件中的某个数据块进行读写操作时，内核首先会申请一个内存页（称为页缓存）与文件中的数据块进行绑定。如下图所示：
+```
+![alt](../assets/ZmFuZ3poZW5naGVpdGk.png)
 
->另外InnoDB存储引擎有一个后台线程，每隔1秒，就会把redo log buffer中的内容写到文件系统缓存（page cache），然后调用fsync刷盘。        
-![alt 后台线程](../assets/v2-e466e33bf61b4c5b70745685da3b376e_1440w.png)
+```
+另外InnoDB存储引擎有一个后台线程，每隔1秒，就会把redo log buffer中的内容写到文件系统缓存（page cache），然后调用fsync刷盘。  
+```
+
+ ![alt 后台线程](../assets/v2-e466e33bf61b4c5b70745685da3b376e_1440w.png)
 
 >三种配置的刷盘时机       
 ![alt 设置为0时](../assets/v2-2abf4716c88e1cb6020a21f6d441cca2_1440w.png)
 ![alt 设置为1时](../assets/v2-0181ad11442ef502210aeec8856f4fd8_1440w.png)
 ![alt 设置为2时](../assets/v2-b1cfa7cae61b0917365acb7026e11a0e_1440w.png)
 
-
-**※延伸思考，当能够简单的解决问题时就不要增加不必要的东西，一个东西的加入可能带来几个补丁的加入，系统复杂度会直线飙升。当然这里的redo log是值得的**  
+**※延伸思考，当能够简单的解决问题时就不要增加不必要的东西，一个东西的加入可能带来几个补丁的加入，系统复杂度会直线飙升。l例如这里为了解决磁盘性能，引入了缓冲池，为了解决数据不一致又引入了redolog，当然这里的redo log是值得的。后续会发现磁盘几乎是所有存储组件的瓶颈，mysql、es最终都是为解决磁盘问题提出了一系列的方案。**  
 
 
 ### 2. undo log
-	保存了事务发生之前的数据版本，可以用于回滚，全在内存中写入，无刷盘操作  
+	保存了事务发生之前的数据版本，可以用于回滚，全在内存中写入，无刷盘操作。 
 
 >行记录隐藏列
 >- DB_ROW_ID：如果没有为表显式的定义主键，并且表中也没有定义唯一索引，那么InnoDB会自动为表添加一个row_id的隐藏列作为主键	
@@ -161,12 +173,12 @@ UPDATE account SET id = 3 WHERE id = 1;
 #### 日志格式  
 
 >- STATMENT：基于SQL语句的复制 (statement-based replication, SBR)，每一条会修改数据的 sql 语句会记录到binlog中。  
-	- 优点：不需要记录每一行的变化，减少了binlog日志量，节约了IO, 从而提高了性能  
-	- 缺点：在某些情况下会导致主从数据不一致，比如执行sysdate()、slepp()等
+	-- 优点：不需要记录每一行的变化，减少了binlog日志量，节约了IO, 从而提高了性能  
+	-- 缺点：在某些情况下会导致主从数据不一致，比如执行sysdate()、slepp()等
 
 >- ROW（默认设置）：基于行的复制 (row-based replication, RBR)，不记录每条 sql 语句的上下文信息，仅需记录哪条数据被修改了  
-	- 优点：不会出现某些特定情况下的存储过程、或 function、或 trigger 的调用和触发无法被正确复制的问题 
-	- 缺点：会产生大量的日志，尤其是alter table的时候会让日志暴涨  
+	-- 优点：不会出现某些特定情况下的存储过程、或 function、或 trigger 的调用和触发无法被正确复制的问题 
+	-- 缺点：会产生大量的日志，尤其是alter table的时候会让日志暴涨  
 
 >- MIXED：基于STATMENT和ROW两种模式的混合复制 (mixed-based replication, MBR)，一般的复制使用STATEMENT模式保存binlog，对于STATEMENT模式无法复制的操作使用ROW模式保存binlog
 
@@ -190,12 +202,13 @@ UPDATE account SET id = 3 WHERE id = 1;
 
 ## QA
 - buffer pool的脏数据有没有可能刷到磁盘
-	- 很正常，http://catkang.github.io/2019/01/16/crash-recovery.html，https://www.zhihu.com/question/280581623/answer/929816984
+	- 很正常，此时相应的redolog也会被落盘，通过redolog把undolog恢复出来，再通过undolog把数据恢复。http://catkang.github.io/2019/01/16/crash-recovery.html，https://www.zhihu.com/question/280581623/answer/929816984
 - redo log的存储是数据页的形式还是只是数据页的某个点?  
     - 每条redo记录由“表空间号+数据页号+偏移量+修改数据长度+具体修改的数据”组成
 - undo log的redolog刷盘是怎样的  
 	- undo log也是在数据页中，数据页的更改都会记录相应的redolog
 	- 一个事务里产生的若干undo log，每条undo log页修改对应的redo log是何时刷盘，如果也是等待事务提交时刷盘，那么被更新的脏页（表数据）如果在事务还没提交之前落盘了，这时突然停电redolog还没落盘，那硬盘里的错误数据应该怎么恢复呢？
+    - 不存在这种情况，当脏页刷盘时会把这个脏页对应的redolog也会刷盘
   
 
 ***
@@ -209,4 +222,4 @@ UPDATE account SET id = 3 WHERE id = 1;
 [带你解析MySQL binlog](https://mp.weixin.qq.com/s?__biz=MzI2NTA3OTY2Nw==&mid=2647634733&idx=1&sn=c4cdd6b5af410026d60bffa8c7c4da3b&chksm=f299cd31c5ee442747b8ce128b3062e3678460b829311c7ed39c7a99f880d143d0b8a4725844&scene=21#wechat_redirect)  
 [Mysql的binlog和relay-log到底长啥样？](https://mp.weixin.qq.com/s?src=11&timestamp=1639390014&ver=3494&signature=N-UqDpI3n5buUQRL4u6FG6xi0GVlbkprwgvE-TBUlk*TY2aPIxgF5bjzANsHV2G4yQ9*m3byNiATALD3wpLPMRc7x1A6a5sgNMizOviug7WDd8wda7qG96cDY*U70JoW&new=1)
 [Buffer Pool 为了让 MySQL 变快都做了什么？！！](https://mp.weixin.qq.com/s?src=11&timestamp=1639659160&ver=3500&signature=afYuHUGUpnVbbPUJpTgCC13m0XPKesbI6CwrVDIiEDs45KqXwr9hcTI0oFC4qeunpy8rycz*rGYccCCsvS4h8rokQXRuR05jSwVQpwHl9d*ZSLO0PuGcDoJcTwETM62c&new=1)
-
+[redo log的刷盘策略](https://blog.csdn.net/weixin_42148897/article/details/125657325)
