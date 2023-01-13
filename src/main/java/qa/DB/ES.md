@@ -25,7 +25,7 @@ Restful论文：https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm
 ```
 ElasticSearch 是分布式数据库，允许多台服务器协同工作，每台服务器可以运行多个实例。单个实例称为一个节点（node），一组节点构成一个集群（cluster）。分片是底层的工作单元，文档保存在分片内，分片又被分配到集群内的各个节点里，每个分片仅保存全部数据的一部分。
 ```
- ![alt](https://img1.baidu.com/it/u=3378901205,1650884957&fm=253&fmt=auto&app=138&f=JPEG?w=679&h=500)
+ ![alt](assets/u=3378901205,1650884957&fm=253&fmt=auto&app=138&f=JPEG.png)
 
 4. 节点类型
 ```
@@ -35,10 +35,10 @@ Master节点：管理集群的变更，如创建/删除索引、节点健康状�
 Ingest节点：ingest 节点可以看作是数据前置处理转换的节点，支持 pipeline管道设置，可以使用 ingest 对数据进行过滤、转换等操作，类似于 logstash 中 filter 的作用，功能相当强大。默认情况下，所有节点都启用Ingest，因此任何节点都可以处理Ingest任务。我们也可以创建专用的Ingest节点
 
 以上节点都可以配置成独立的，也可以一个节点扮演多个角色。默认情况下，所有节点都是协调节点、数据节点、Ingest节点
-混合部署（左图）:默认方式
+混合部署（左图）:默认方式，这种方式可能会出现大量聚合结果影响本节点的数据查询，有条件就使用分层部署，单独用几台机器作为协调节点
 分层部署（右图）:协调节点不承载数据
 ```
- ![alt](https://mmbiz.qpic.cn/sz_mmbiz_jpg/HV4yTI6PjbINEnHgibsU5BafhRBU6mO8awg5rJIDOjln1nTt4QdAPVQtfuYr038L2xn5L3T58x7VWJaJMesG2Vg/640?wx_fmt=jpeg&wxfrom=5&wx_lazy=1&wx_co=1)
+ ![alt](assets/nodetype.png)
 
 5. 集群发现机制
 ```
@@ -61,14 +61,14 @@ Node启动后，首先要通过节点发现功能加入集群。ZenDiscovery是E
 另外还有些集群头铁，自己瞎写算法，例如ES集群（当年还没有RAFT算法），迭代好几年了在某些场景下仍然有bug。
 ```
 
-7. doc分片路由计算
+7. 数据分片算法是怎样的
 ```
 hash(<文档id>) % <主分片数量> 根据结果映射到不同的分片
 副本数量可以增加但是分片数量不能变更，因为数据是取模路由到分片的
 ```
 
 8. ES构造索引的流程
- ![alt](https://img2020.cnblogs.com/blog/1782729/202107/1782729-20210717113554905-954675590.png)
+ ![alt](assets/1782729-20210717113554905-954675590.png)
 
 9. 检索数据流程
 ```
@@ -79,7 +79,7 @@ hash(<文档id>) % <主分片数量> 根据结果映射到不同的分片
 4.协调节点进入第二阶段：根据这些排序后的docID向集群对应节点发起获取N个Document
 5.协调节点获得返回的N条Document，并返回给客户端
 ```
- ![alt](https://pic3.zhimg.com/80/v2-f495006fb8687dc5654e60e058062d42_1440w.webp)
+ ![alt](assets/v2-f495006fb8687dc5654e60e058062d42_1440w.png)
 
 
 10. 索引 Index、Mapping、类型 Type 和文档 Document
@@ -95,7 +95,7 @@ document -> row
 ```
 https://www.modb.pro/db/130339
 ```
-![alt](https://oss-emcsprod-public.modb.pro/wechatSpider/modb_20211011_a083e592-2a73-11ec-b6a5-fa163eb4f6be.png)
+![alt](assets/modb_20211011_a083e592-2a73-11ec-b6a5-fa163eb4f6be.png)
 
 ## 底层-Lucene
 1. ES和Lucene的关系
@@ -109,7 +109,7 @@ Lucene index 由一堆 Segment 的集合加上一个提交点组成
 Segment：也叫段，相当于一个数据集。segment是不可变的，只会整体删除重新构建
 Commit point：提交点，保存着所有segment列表
 ```
- ![alt](https://pic3.zhimg.com/80/v2-aed6103e8280c02c2cb3d2b0a14558be_720w.png)
+ ![alt](assets/v2-aed6103e8280c02c2cb3d2b0a14558be_720w.png)
 
 3. 什么是倒排索引，倒排索引是如何实现的
 ```
@@ -119,14 +119,14 @@ Mysql数据库中的二级索引其实也是反向的，通过字段值去找记
    
    底层结构如下图所示，Term Index 不存储所有的单词，只存储单词前缀，通过字典树找到单词所在的块，也就是单词的大概位置，再在块里二分查找，找到对应的单词，再找到单词对应的文档列表
 ```
- ![alt](https://img-blog.csdnimg.cn/20210711111855766.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE2NTcwNjA3,size_16,color_FFFFFF,t_70#pic_center)
+ ![alt](assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE2NTcwNjA3,size_16,color_FFFFFF,t_70.png)
 
 4. 详细说下Segment是个什么概念
 ```
 首先segment是个逻辑概念，是一系列不同类型文件的集合。数据在写入的过程中，达到一定条件会保存当前segment，开启一个新的segment写入。数据是由若干份segment组成，每个segment只保存了部分数据。
 ```
-![alt](https://segmentfault.com/img/bVcXVid)
-![alt](https://segmentfault.com/img/bVcXVip)
+![alt](assets/bVcXVid.png)
+![alt](assets/bVcXVip.png)
 
 5. 描述下写入操作的流程
 ```
@@ -135,7 +135,7 @@ Mysql数据库中的二级索引其实也是反向的，通过字段值去找记
 3. buffer 中的数据会每秒 refresh 到 cache（磁盘高速缓存）中，并生成新的segment（此时Document才可读，这就是ES的可见性并不是准实时的原因）
 4. buffer 被清空，记录 commit point，cache 内的 segment 被 fsync 刷新到磁盘。 删除translog
 ```
- ![alt](https://pic2.zhimg.com/80/v2-4574b8251f39a7cea95cf296c6f64d1d_720w.webp)
+ ![alt](assets/v2-4574b8251f39a7cea95cf296c6f64d1d_720w.png)
 
 6. segment可变吗
 ```
@@ -150,7 +150,7 @@ segment 不可改变，所以 docment 并不能从之前的 segment 中移除或
 segment 数目太多会带来较大的麻烦。 每一个 segment 都会消耗文件句柄。更重要的是，每个搜索请求都必须轮流检查每个 segment ；所以 segment 越多，搜索也就越慢。
 ElasticSearch 有一个后台进程专门负责 segment 的合并，定期执行 merge 操作，将多个小 segment 文件合并成一个 segment，在合并时被标识为 deleted 的 doc（或被更新文档的旧版本）不会被写入到新的 segment 中。合并完成后，然后将新的 segment 文件 flush 写入磁盘；然后创建一个新的 commit point 文件，标识所有新的 segment 文件，并排除掉旧的 segement 和已经被合并的小 segment；然后打开新 segment 文件用于搜索使用，等所有的检索请求都从小的 segment 转到 大 segment 上以后，删除旧的 segment 文件，这时候，索引里 segment 数量就下降了。
 ```
-![alt](https://img-blog.csdnimg.cn/20210616114218104.jpg?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2E3NDUyMzM3MDA=,size_16,color_FFFFFF,t_70)
+![alt](assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2E3NDUyMzM3MDA=,size_16,color_FFFFFF,t_70.png)
 
 8. 为什么segment合并可以做到不中断正常读写
 ```
@@ -211,7 +211,7 @@ DELETE 用来删除资源；
 ```
 Domain Specific Language 领域专用语言， Elasticsearch提供了基于JSON的DSL来定义查询。 DSL由叶子查询子句和复合查询子句两种子句组成。
 ```
- ![alt](https://img-blog.csdnimg.cn/20210707100257345.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NhbWFyeV9uaXU=,size_16,color_FFFFFF,t_70)
+ ![alt](assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2NhbWFyeV9uaXU=,size_16,color_FFFFFF,t_70.png)
 
 3. bool组合查询包含哪四种？查询结果是不同操作的并集还是交集
 ```
@@ -297,8 +297,8 @@ messgae:"查询某句话" （双引号括起来）  使用的match_phrase查询
 ```
 主要有三种方案：
 1.from, size，因为es是分片的需要每个分片都执行分页后再汇总，所以要求from+size不能超过1万。防止系统消耗过大
-2.scroll，对数量没限制，适合实时性要求不高的
-3.seach after 相当于记录了order字段的返回值，下次拿着起点值过滤即可，只能查询下一页。而且排序值要保持唯一，否则结果并不准确
+2.scroll，对数量没限制，适合实时性要求不高的。因为会在请求接收到之后对结果做快照，所以后续数据改动难以感知到
+3.seach after 相当于记录了order字段的返回值，下次拿着起点值过滤即可，只能查询下一页。而且排序值要保持唯一，否则结果并不准确，例如有10条相同值的数据“dog”，第一页只展示了5条“dog”，下一页如果用>"dog"会错过5条，这只是举例，要注意实际的排序字段含义。
 ```
 
 11. es分页原理
@@ -340,14 +340,14 @@ curl -XGET 'localhost:9200/_search/scroll?pretty' -H 'Content-Type: application/
 
 13. nested、父子Type有什么用
 ```
-nested object数据类型ES在保存的时候不会有扁平化处理。两者对比见下图
+nested object数据类型：ES在保存的时候不会有扁平化处理。两者对比见下图
 
 ES 提供了类似关系型数据库中 Join 的实现，可以用父子Type的形势来实现
 注意：父子文档的查询数据需要放到一个分片中
 CRM中的join查询是依赖了父子Type
-详见：https://blog.csdn.net/huanglu0314/article/details/126651963（里边有扁平化非扁平化的解释）
+详见：https://blog.csdn.net/huanglu0314/article/details/126651963（里边有扁平化、非扁平化的解释）
 ```
- ![alt](https://img-blog.csdnimg.cn/20191210174456370.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xtMzI0MTE0,size_16,color_FFFFFF,t_70)
+ ![alt](assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L2xtMzI0MTE0,size_16,color_FFFFFF,t_70.png)
 
 14. 在es6中已经不建议使用type，在es7中已经彻底移除type，只有一个默认type。那么CRM需求在新的es版本中应该如何满足
 ```
