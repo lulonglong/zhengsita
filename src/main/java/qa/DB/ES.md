@@ -97,6 +97,11 @@ https://www.modb.pro/db/130339
 ```
 ![alt](assets/modb_20211011_a083e592-2a73-11ec-b6a5-fa163eb4f6be.png)
 
+12. ES支持事务吗？
+```
+基于搜索应用场景的设计，并不支持事务，所以ES设计上才能更加简单
+```
+
 ## 底层-Lucene
 1. ES和Lucene的关系
 ```
