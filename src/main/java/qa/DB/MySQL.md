@@ -199,7 +199,7 @@ rows：此列是MySQL在查询中估计要读取的行数。注意这里不是�
 Extra(重要)：此列是一些额外信息（存在为NULL的情况，需要进一步了解NULL代表啥）。常见的重要值如下
 		1）Using index：使用覆盖索引
 		2）Using index condition：与Using index的区别是where条件同样都命中索引，
-		3）Using where：代表在server层需要做过滤才能筛选出数据。这里涉及到server层和存储引擎层的职责，server层在执行sql时会把sql分解成执行计划去调用存储引擎的api，我们提交的一条sql，实际上并不是全部由存储引擎层完整执行完毕。而是把索引过滤交给存储引擎层，数据返回给server层之后，server层再根据其他条件过滤，由server层再过滤就是Using where的含义。这里的情况仍然比较复杂，会发现所有条件都在一个索引中仍然会出现using index;using where的情况，需要进一步探索内部shi'xia
+		3）Using where：代表在server层需要做过滤才能筛选出数据。这里涉及到server层和存储引擎层的职责，server层在执行sql时会把sql分解成执行计划去调用存储引擎的api，我们提交的一条sql，实际上并不是全部由存储引擎层完整执行完毕。而是把索引过滤交给存储引擎层，数据返回给server层之后，server层再根据其他条件过滤，由server层再过滤就是Using where的含义。这里的情况仍然比较复杂，会发现所有条件都在一个索引中仍然会出现using index;using where的情况，需要进一步探索内部实现
 		4）Using temporary：MySQL需要创建一张临时表来处理查询。出现这种情况一般是要进行优化的
 		5）Using filesort：将使用外部排序而不是索引排序，数据较小时从内存排序，否则需要在磁盘完成排序
 		6）Select tables optimized away：使用某些聚合函数（比如 max、min）来访问存在索引的某个字段时
@@ -324,7 +324,7 @@ binlog记录了dml和ddl语句，以二进制的形式保存，常用于主从�
 4. redolog和undolog分别是什么，以及在事务中分别起到什么作用
 ```
 redolog防止在发生故障的时间点，尚有脏页未写入磁盘，确保事务的持久性。redolog要落磁盘
-undolog保存了事务发生之前的数据的一个版本，可以用于回滚，保证了事务的原子性。undolog不落盘，纯内存
+undolog保存了事务发生之前的数据的一个版本，可以用于回滚，保证了事务的原子性。undolog也在数据页中，被当成数据落盘到undo表空间
 ```
 
 5. binlog的日志格式有哪些
