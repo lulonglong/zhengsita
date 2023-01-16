@@ -418,22 +418,17 @@ MySQL在5.5.3之后增加了这个utf8mb4的编码，mb4就是most bytes 4的意
 redolog的刷盘机制是怎样的（参见技术分享）
 binlog的刷盘机制（参见技术分享）
 undolog的工作机制（参见技术分享）
-页的进一步详解和碎片清理
+页的进一步详解和碎片清理（参见技术分享）
 为什么mysql的默认隔离级别是可重复读（参见技术分享）？
 死锁相关的
 加锁的过程
 主从复制https://zhuanlan.zhihu.com/p/533187002
-分库分表
-
-```
-客户端代理：分片逻辑在应用端，封装在jar包中，通过修改或者封装JDBC层来实现。 当当网的 Sharding-JDBC 、阿里的TDDL是两种比较常用的实现。
-中间件代理：在应用和数据中间加了一个代理层。分片逻辑统一维护在中间件服务中。 我们现在谈的 Mycat 、360的Atlas、网易的DDB等等都是这种架构的实现。
-```
 如何理解 MySQL 的边读边发
 MySQL 临时表的用法和特性
 
-//TODO 页及碎片整理相关的
 
+
+# 参考资料
 [一灯架构](https://zhuanlan.zhihu.com/p/537258392)
 [MySQL-Explain详解](https://blog.csdn.net/fsdfkjai/article/details/121770629)
 [MySQL explain，Extra分析](https://www.cnblogs.com/myseries/p/11262054.html)
