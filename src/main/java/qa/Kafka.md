@@ -39,9 +39,9 @@ Kafka 的基本架构组成是：由多个 broker 组成一个集群，每个 br
 
 在 Kafka 0.8 版本之前，是没有 HA 机制的，当任何一个 broker 所在节点宕机了，这个 broker 上的 partition 就无法提供读写服务，所以这个版本之前，Kafka 没有什么高可用性可言。
 
-在 Kafka 0.8 以后，提供了 HA 机制，就是 replica 副本机制。每个 partition 上的数据都会同步到其它机器，形成自己的多个 replica 副本。所有 replica 会选举一个 leader 出来，消息的生产者和消费者都跟这个 leader 打交道，其他 replica 作为 follower。写的时候，leader 会负责把数据同步到所有 follower 上去，读的时候就直接读 leader 上的数据即可。Kafka 负责均匀的将一个 partition 的所有 replica 分布在不同的机器上，这样才可以提高容错性。
+在 Kafka 0.8 以后，提供了 HA 机制，就是 replica 副本机制。每个 partition 上的数据都会同步到其它机器，形成自己的多个 replica 副本。所有 replica 会选举一个 leader 出来，消息的生产者和消费者都跟这个 leader 打交道，其他 replica 作为 follower。写的时候，leader 会负责把数据同步到所有 follower 上去（**实际过程是follower副本请求leader副本拉取**），读的时候就直接读 leader 上的数据即可。Kafka 负责均匀的将一个 partition 的所有 replica 分布在不同的机器上，这样才可以提高容错性。
 
-![kafka-struct](https://img-stage.yit.com/CMSRESQN/d83e35d4fe0c8868a9d0e1171337b8bb_1894X974.png)
+![kafka-struct](assets/d83e35d4fe0c8868a9d0e1171337b8bb_1894X974.png)
 
 ## Kafka 消息是采用 Pull 模式，还是 Push 模式
 
@@ -89,7 +89,7 @@ Kafka SocketServer 是基于Java NIO 开发的，采用了 Reactor 的模式(已
 * Processor
 * Handler
 
-![kafka-reactor](https://upload-images.jianshu.io/upload_images/4325076-41f7b454a8d7f67b.png)
+![kafka-reactor](assets/4325076-41f7b454a8d7f67b.png)
 1. Acceptor：1个接收线程，负责监听新的连接请求，同时注册OP_ACCEPT 事件，将新的连接按照"round robin"方式交给对应的 Processor 线程处理
 2. Processor：N个处理器线程，其中每个 Processor 都有自己的 selector，它会向 Acceptor 分配的 SocketChannel 注册相应的 OP_READ 事件，N 的大小由“num.networker.threads”决定
 3. KafkaRequestHandler：M个请求处理线程，包含在线程池—KafkaRequestHandlerPool内部，从RequestChannel的全局请求队列—requestQueue中获取请求数据并交给KafkaApis处理，M的大小由“num.io.threads”决定
@@ -103,7 +103,7 @@ Kafka SocketServer 是基于Java NIO 开发的，采用了 Reactor 的模式(已
 ### 生产消息流程
 
 生产者发送到 Kafka集群的详细流程如下图所示:
-![alt](https://image.z.itpub.net/zitpub.net/JPG/2022-04-01/1DB56CF0F3BB798C899A478BD90DBD58.jpg)
+![alt](assets/1DB56CF0F3BB798C899A478BD90DBD58.png)
 
 * 首先来一条消息后,生产者源码里面会对消息进行封装成 ProducerRecord对象。
 * 封装成对象后会对该对象进行序列化[涉及网络传输], 调用Serializer组件进行序列化, 序列化后进行发送。
@@ -120,23 +120,23 @@ Kafka SocketServer 是基于Java NIO 开发的，采用了 Reactor 的模式(已
 操作系统本身有一层缓存，叫做 page cache，是在内存里的缓存，我们也可以称之为 os cache，意思就是操作系统自己管理的缓存。那么在写磁盘文件的时候，就可以先直接写入 os cache 中，也就是仅仅写入内存中，接下来由操作系统自己决定什么时候把 os cache 里的数据真的刷入到磁盘中, 这样大大提高写入效率和性能。 
 
 如下图所示:
-![os cache](https://image.z.itpub.net/zitpub.net/JPG/2022-04-01/B411DA7D7C38A9F474FF4C137EFC5C41.jpg)
+![os cache](assets/B411DA7D7C38A9F474FF4C137EFC5C41.png)
 
-另外还有一个非常关键的操作,就是 kafka 在写数据的时候是以磁盘顺序写的方式来进行落盘的, 即将数据追加到文件的末尾, 而不是在文件的随机位置来修改数据, 对于普通机械磁盘, 如果是随机写的话, 涉及到磁盘寻址的问题,导致性能确实极低, 但是如果只是按照顺序的方式追加文件末尾的话, 这种磁盘顺序写的性能基本可以跟写内存的性能差不多的。
+另外还有一个非常关键的操作，就是 kafka 在写数据的时候是以磁盘顺序写的方式来进行落盘的，即将数据追加到文件的末尾，而不是在文件的随机位置来修改数据，对于普通机械磁盘，如果是随机写的话，涉及到磁盘寻址的问题，导致性能确实极低，但是如果只是按照顺序的方式追加文件末尾的话，这种磁盘顺序写的性能基本可以跟写内存的性能差不多的。
 
 ### 零拷贝技术(zero-copy)
 
 从 Kafka 消费数据, 在消费的时候实际上就是从 Kafka 的磁盘文件读取数据然后发送给下游的消费者
-* 先检查要读取的数据是否在 os cache 中, 如果不在的话就从磁盘文件读取数据后放入 os cache。
+* 先检查要读取的数据是否在 os cache 中，如果不在的话就从磁盘文件读取数据后放入 os cache。
 * 接着从 os cache 里面 copy 数据到应用程序进程的缓存里面, 在从应用程序进程的缓存里 copy 数据到操作系统层面的 socket缓存里面, 后再从 socket 缓存里面读取数据后发送到网卡, 后从网卡发送到下游的消费者。
-![alt](https://image.z.itpub.net/zitpub.net/JPG/2022-04-01/E9EBB6870564458323D02DD525B2EA7D.jpg)
+![alt](assets/E9EBB6870564458323D02DD525B2EA7D.png)
 
 从上图可以看出, 整个过程有两次没必要的拷贝操作，这两次拷贝过程中, 还发生了好几次上下文的切换, 所以相对来说是比较消耗性能的
 * 从操作系统的 os cache  拷贝数据到应用程序进程的缓存。
 * 接着又从应用程序缓存里拷贝到操作系统的socket缓存中。
 
 kafka 为了解决这个问题, 在读取数据的时候就引入了零拷贝技术。即让操作系统的 os cache 中的数据直接发送到网卡后传出给下游的消费者，中间跳过了两次拷贝数据的步骤，从而减少拷贝的 CPU 开销, 减少用户态内核态的上下文切换次数,  从而优化数据传输的性能, 而Socket缓存中仅仅会拷贝一个描述符过去，不会拷贝数据到Socket缓存。如下图所示:
-![alt](https://image.z.itpub.net/zitpub.net/JPG/2022-04-01/77493F047339FEF2810ED09D9C67A9F9.jpg)
+![alt](assets/77493F047339FEF2810ED09D9C67A9F9.png)
 
 常见的零拷贝思路主要有两种实现方式:
 * 直接I/O: 数据直接跳过内核, 在用户空间与 I/O 设备之间进行传递, 内核在这种情况下只是进行必要的辅助工作
@@ -162,7 +162,7 @@ Producer、Broker、Consumer 要使用相同的压缩算法, 在 Producer 向 Br
 默认情况下, 在 Kafka 生产者中不启用压缩。
 
 ### 服务端内存池设计
-![](https://image.z.itpub.net/zitpub.net/JPG/2022-04-01/E13946E92AB87EECE02F05A25544CEE9.jpg)
+![](assets/E13946E92AB87EECE02F05A25544CEE9.png)
 
 在前面我们讲解了一条消息生产的详细流程, 中间涉及到了批次(Batch)和请求(Request), 在这个过程中, Kafka还有一个重要的设计理念 即内存池方案, 这里就详细讲述下内存池的实现过程.
 * 这里简化下流程, 来一条消息会先进行封装然后序列化后会计算出分区号, 并把这个消息存储到缓存里面
@@ -170,7 +170,7 @@ Producer、Broker、Consumer 要使用相同的压缩算法, 在 Producer 向 Br
 * 那么假设这个时候 我们有个2个topic, 每个topic有2个分区, 那么是不是总共有4个的分区即4个队列, 每个队列里面都有一个个批次,  这个时候消息算出来分区后就会写入队列的新一个批次
 * Sender线程就会检测这个批次(Batch)是否已经写满,或者时间是否到达, 如果满足Sender线程就会取出封装成Request就会发送
 * 封装批次会用到内存, Sender发送完毕内存会进行回收, 在Java中如果频繁操作内存和回收,会遇到头疼的FullGC的问题, 工作线程的性能就会降低, 整个生产者的性能就会受到影响, Kafka的解决方案就是内存池, 对内存块的使用跟数据库的连接池一样
-* 整个Buffer Poll 内存池大小是32M , 内存池分为两个部分, 一个部分是内存队列, 队列里面有一个个内存块(16K), 另外一部分是可用内存,   一条消息过来后会向内存池申请内存块, 申请完后封装批次并写入数据, sender线程就会发送并响应, 然后清空内存放回内存池里面进行反复使用, 这样就大大减少了GC的频率, 保证了生产者的稳定和高效, 性能会大大提高
+* 整个Buffer Poll 内存池大小是**32M** , 内存池分为两个部分, 一个部分是内存队列, 队列里面有一个个内存块(16K), 另外一部分是可用内存,   一条消息过来后会向内存池申请内存块, 申请完后封装批次并写入数据, sender线程就会发送并响应, 然后清空内存放回内存池里面进行反复使用, 这样就大大减少了GC的频率, 保证了生产者的稳定和高效, 性能会大大提高
 
 ## Kafka producer发送数据，ack为0，1，-1分别是什么意思
 
@@ -182,7 +182,7 @@ Producer、Broker、Consumer 要使用相同的压缩算法, 在 Producer 向 Br
 
 首先需要弄明白消息为什么会丢失，对于一个消息队列，会有 生产者、MQ、消费者 这三个角色，在这三个角色数据处理和传输过程中，都有可能会出现消息丢失。
 
-![kakka-queue-lose](https://img-stage.yit.com/CMSRESQN/fab8009fed6baaa75e71bdbabb50bb5a_2104X650.png)
+![kakka-queue-lose](assets/fab8009fed6baaa75e71bdbabb50bb5a_2104X650.png)
 
 消息丢失的原因以及解决办法：
 
@@ -283,9 +283,9 @@ Leader副本选举对用户是完全透明的，它是由Controller独立完成�
 
 ## 为什么Kafka不支持读写分离
 
-在 Kafka 中，生产者写入消息、消费者读取消息的操作都是与 leader 副本进行交互的，从 而实现的是一种主写主读的生产消费模型。
+在 Kafka 中，生产者写入消息、消费者读取消息的操作都是与 leader 副本进行交互的，从而实现的是一种主写主读的生产消费模型。
 
-Kafka 并不支持主写从读，因为主写从读有 2 个很明 显的缺点:
+Kafka 并不支持主写从读，因为主写从读有 2 个很明显的缺点:
 
 数据一致性问题。数据从主节点转到从节点必然会有一个延时的时间窗口，这个时间 窗口会导致主从节点之间的数据不一致。某一时刻，在主节点和从节点中 A 数据的值都为 X， 之后将主节点中 A 的值修改为 Y，那么在这个变更通知到从节点之前，应用读取从节点中的 A 数据的值并不为最新的 Y，由此便产生了数据不一致的问题。
 延时问题。类似 Redis 这种组件，数据从写入主节点到同步至从节点中的过程需要经历网络→主节点内存→网络→从节点内存这几个阶段，整个过程会耗费一定的时间。而在 Kafka 中，主从同步会比 Redis 更加耗时，它需要经历网络→主节点内存→主节点磁盘→网络→从节点内存→从节点磁盘这几个阶段。对延时敏感的应用而言，主写从读的功能并不太适用。
@@ -301,7 +301,7 @@ auto.offset.reset关乎kafka数据的读取，是一个非常重要的设置。�
 
 提交过offset，latest和earliest没有区别，但是在没有提交offset情况下，用latest直接会导致无法读取旧数据。
 
-![怎么重设消费者组位移](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/Kafka%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%B8%8E%E5%AE%9E%E6%88%98/30%20%20%E6%80%8E%E4%B9%88%E9%87%8D%E8%AE%BE%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84%E4%BD%8D%E7%A7%BB%EF%BC%9F.md)
+[怎么重设消费者组位移](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/Kafka%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%B8%8E%E5%AE%9E%E6%88%98/30%20%20%E6%80%8E%E4%B9%88%E9%87%8D%E8%AE%BE%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84%E4%BD%8D%E7%A7%BB%EF%BC%9F.md)
 
 ## 消费端Rebalance 机制
 Rebalance 本质上是一种协议，规定了一个 Consumer Group 下的所有 Consumer 如何达成一致，来分配订阅 Topic 的每个分区。比如某个 Group 下有 20 个 Consumer 实例，它订阅了一个具有 100 个分区的 Topic。正常情况下，Kafka 平均会为每个 Consumer 分配 5 个分区。这个分配的过程就叫 Rebalance。
