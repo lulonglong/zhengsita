@@ -344,6 +344,10 @@ Consumer 实例增加的情况很好理解，当我们启动一个配置有相�
 [Kafka中如何找到offset对应的Message消息](https://codeantenna.com/a/2KQHECO6y8)
 partion->segment>index->log
 
+
+
+
+## 参考文档
 [基于kafka实现延迟队列](https://zhuanlan.zhihu.com/p/365802989)
 [简谈Kafka中的NIO网络通信模型](https://www.jianshu.com/p/a6b9e5342878)
 [Kafka面试题](https://github.com/cosen1024/Java-Interview/blob/main/MQ/Kafka%E9%9D%A2%E8%AF%95%E9%A2%98.md)
