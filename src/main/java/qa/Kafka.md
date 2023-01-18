@@ -244,9 +244,13 @@ pull方式的
 
 
 ## kafka选举
-* 控制器的选举
-* 分区leader的选举
-* 消费者相关的选举
+* Broker Controller的选举
+```
+最先在Zookeeper上创建临时节点/controller成功的Broker就是Controller
+https://blog.csdn.net/wypblog/article/details/121059218
+```
+* leader副本的选举
+* 消费者相关的选举，Group Coordinator
 * 消费组选主
   * 在Kafka的消费端，会有一个消费者协调器以及消费组，组协调器（Group Coordinator）需要为消费组内的消费者选举出一个消费组的leader。
   * 如果消费组内还没有leader，那么第一个加入消费组的消费者即为消费组的leader，如果某一个时刻leader消费者由于某些原因退出了消费组，那么就会重新选举leader，选举方式如下：
