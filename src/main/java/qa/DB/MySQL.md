@@ -137,7 +137,7 @@ select * from table_name where MATCH(column1,column2) AGAINST('Lenovo')
 ```
 19. 索引分裂是怎么发生的
 ```
-当索引B+树节点的key数量超过磁盘页的容量就会分裂
+当索引B+树节点的key数量超过数据页的容量就会分裂。一般是按照50%的分裂法则，索引单方向递增插入的时候会触发走优化策略，老页面不动或者基本不动，新数据进入新页面
 ```
 20. 索引提示
 ```
@@ -196,10 +196,10 @@ ref：此列显示索引筛选的条件，是常量或者列。where a=1，匹�
 
 rows：此列是MySQL在查询中估计要读取的行数。注意这里不是结果集的行数
 
-Extra(重要)：此列是一些额外信息（存在为NULL的情况，需要进一步了解NULL代表啥）。常见的重要值如下
-		1）Using index：使用覆盖索引
-		2）Using index condition：与Using index的区别是where条件同样都命中索引，
-		3）Using where：代表在server层需要做过滤才能筛选出数据。这里涉及到server层和存储引擎层的职责，server层在执行sql时会把sql分解成执行计划去调用存储引擎的api，我们提交的一条sql，实际上并不是全部由存储引擎层完整执行完毕。而是把索引过滤交给存储引擎层，数据返回给server层之后，server层再根据其他条件过滤，由server层再过滤就是Using where的含义。这里的情况仍然比较复杂，会发现所有条件都在一个索引中仍然会出现using index;using where的情况，需要进一步探索内部实现
+Extra(重要)：此列是一些额外信息。常见的重要值如下
+		1）Using index：使用了覆盖索引，只要使用了覆盖索引就出现，不管其他的
+		2）Using index condition：这个是指用到了索引下推（参见索引下推），非ref访问方法，例如range还会算作索引下推条件再在引擎层比较一遍，只要使用了索引下推就会出现，不管其他的
+		3）Using where：代表在server层需要做过滤才能筛选出数据。这里涉及到server层和存储引擎层的职责，server层在执行sql时会把sql分解成执行计划去调用存储引擎的api，我们提交的一条sql，实际上并不是全部由存储引擎层完整执行完毕。而是把索引查询（包含全表扫描）交给存储引擎层，数据返回给server层之后，server层再根据条件过滤，由server层再过滤就是Using where的含义。using index;using where会同时出现，目前的理解是非唯一索引返回给server的数据会在server层再次过滤，不一定对，需要再深入研究
 		4）Using temporary：MySQL需要创建一张临时表来处理查询。出现这种情况一般是要进行优化的
 		5）Using filesort：将使用外部排序而不是索引排序，数据较小时从内存排序，否则需要在磁盘完成排序
 		6）Select tables optimized away：使用某些聚合函数（比如 max、min）来访问存在索引的某个字段时

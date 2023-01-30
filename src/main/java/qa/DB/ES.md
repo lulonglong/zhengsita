@@ -44,7 +44,7 @@ Ingest节点：ingest 节点可以看作是数据前置处理转换的节点，�
 ```
 提供了两种方案供选择
 1.广播：配置相同的集群名在局域网内广播，发现就抱团
-2.单播：通过文件配置机器的ip列表
+2.单播：通过文件配置部分机器的ip列表，互相传播并把自己发现的节点告诉已发现节点
 ```
 
 6. 节点选举原理
@@ -52,19 +52,20 @@ Ingest节点：ingest 节点可以看作是数据前置处理转换的节点，�
 Node启动后，首先要通过节点发现功能加入集群。ZenDiscovery是ES自己实现的一套用于节点发现和选主等功能的模块，没有依赖Zookeeper等工具。只有候选的主节点（master：true）才能成为主节点
 
 大概原理：
-		先根据节点的clusterStateVersion比较，clusterStateVersion越大，优先级越高。clusterStateVersion相同时，进入compareNodes，其内部按照节点的Id比较(Id为节点第一次启动时随机生成)。通过设置最小主节点数大于一半来防止脑裂，投票数要大于等于最小主节点数
+		先根据节点的clusterStateVersion（包含了整个群集中所有分片的元信息）比较，clusterStateVersion越大，优先级越高。clusterStateVersion相同时，进入compareNodes，其内部按照节点的Id比较(Id为节点第一次启动时随机生成)。通过设置最小主节点数大于一半来防止脑裂，投票数要大于等于最小主节点数
 		
 		当前涉及到集群的主流选主方案基本是两个方向
 1.依赖Zookeeper（zab算法），方案简单。缺点是多了一个组件。例如kafka
 2.使用成熟的算法实现，例如RAFT算法。相比 Paxos， Raft 一直以来就是以易于理解著称。Redis Cluster就是用了Raft算法
 
 另外还有些集群头铁，自己瞎写算法，例如ES集群（当年还没有RAFT算法），迭代好几年了在某些场景下仍然有bug。
+7.X之后的ES，采用一种新的选主算法，实际上是 Raft 的实现，但并非严格按照 Raft 论文实现，而是做了一些调整
 ```
 
 7. 数据分片算法是怎样的
 ```
 hash(<文档id>) % <主分片数量> 根据结果映射到不同的分片
-副本数量可以增加但是分片数量不能变更，因为数据是取模路由到分片的
+副本数量可以增加但是分片数量不能变更，因为数据是取模路由到分片的，由服务端协调节点完成
 ```
 
 8. ES构造索引的流程
@@ -470,7 +471,7 @@ ES目前有4种客户端：Jest client、Rest client、Transport client、Node c
 
 1. Node client（2.3弃用）:需要单独建立一个节点，连接该节点进行操作，该节点不能存储数据，也不能成为主节点。
 2. Transport client（7.0弃用）:是不需要单独一个节点，脱离在集群之外。
-		Transport client、Node client都是通过9300端口，使用 Elasticsearch 的原生 传输 协议和集群交互。（集群交互的端口都是通过9300）
+		Transport client、Node client都是通过9300端口，使用 Elasticsearch 的原生传输协议和集群交互。（集群交互的端口都是通过9300）
 3. Java Low Level REST Client: 低级别的REST客户端，通过http与集群交互，用户需自己编组请求JSON串，及解析响应JSON串。兼容所有ES版本。
 4. Java High Level REST Client: 高级别的REST客户端，基于低级别的REST客户端，增加了编组请求JSON串、解析响应JSON串等相关api。使用的版本需要保持和ES服务端的版本一致，否则会有版本问题。
 ```

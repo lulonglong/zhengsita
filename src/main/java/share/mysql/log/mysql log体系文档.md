@@ -16,7 +16,7 @@
 ## 知识铺垫
 	Mysql 架构
 	1.binlog属于Server这层    
-	2.redo log属于存储引擎层，并且是InnoDB存储引擎独有的      
+	2.redo log属于存储引擎层，并且是InnoDB存储引擎独有的。MyIsam没有安全恢复能力  
  ![alt mysql 逻辑架构](../assets/v2-7d3fe6e3e961f850654632d2e51a04fc_1440w.png)
 
 

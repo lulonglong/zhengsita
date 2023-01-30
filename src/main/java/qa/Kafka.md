@@ -161,7 +161,7 @@ Producer、Broker、Consumer 要使用相同的压缩算法, 在 Producer 向 Br
 
 默认情况下, 在 Kafka 生产者中不启用压缩。
 
-### 服务端内存池设计
+### 客户端内存池设计
 ![](assets/E13946E92AB87EECE02F05A25544CEE9.png)
 
 在前面我们讲解了一条消息生产的详细流程, 中间涉及到了批次(Batch)和请求(Request), 在这个过程中, Kafka还有一个重要的设计理念 即内存池方案, 这里就详细讲述下内存池的实现过程.
@@ -203,6 +203,8 @@ Kafka 导致的数据丢失一个常见的场景就是 Kafka 某个 broker 宕�
 * 在 producer 端设置 acks=all，这个是要求每条数据，必须是写入所有 replica 之后，才能认为是写成功了；
 * 在 producer 端设置 retries=MAX（很大很大很大的一个值，无限次重试的意思）：这个参数的含义是一旦写入失败，就无限重试，卡在这里了。
 
+还有一种情况是leader副本的消息是写入page cache中的，在还没有刷盘的情况下断电会丢消息，也是通过配置副本确认机制来解决
+
 ## Kafka 如何保证消息的顺序性
 
 在某些业务场景下，我们需要保证对于有逻辑关联的多条MQ消息被按顺序处理，比如对于某一条数据，正常处理顺序是新增-更新-删除，最终结果是数据被删除；如果消息没有按序消费，处理顺序可能是删除-新增-更新，最终数据没有被删掉，可能会产生一些逻辑错误。对于如何保证消息的顺序性，主要需要考虑如下两点：
@@ -233,13 +235,11 @@ Kafka副本当前分为领导者副本和追随者副本。
 
 Follower副本只是采用异步拉（PULL）的方式，被动地同步Leader副本中的数据，并且在Leader副本所在的Broker宕机后，随时准备应聘Leader副本。
 
-pull方式的
-
-加分点：
+pull方式的加分点：
 
 强调Follower副本也能对外提供读服务。自Kafka 2.4版本开始，社区通过引入新的Broker端参数，允许Follower副本有限度地提供读服务。
 强调Leader和Follower的消息序列在实际场景中不一致。通常情况下，很多因素可能造成Leader和Follower之间的不同步，比如程序问题，网络问题，broker问题等，短暂的不同步我们可以关注（秒级别），但长时间的不同步可能就需要深入排查了，因为一旦Leader所在节点异常，可能直接影响可用性。
-注意：之前确保一致性的主要手段是高水位机制（HW），但高水位值无法保证Leader连续变更场景下的数据一致性，因此，社区引入了Leader Epoch机制，来修复高水位值的弊端。
+注意：之前确保一致性的主要手段是高水位机制（HW），但高水位值无法保证Leader连续变更场景下的数据一致性，因此，社区引入了**Leader Epoch**机制，来修复高水位值的弊端。
 
 
 
@@ -249,8 +249,12 @@ pull方式的
 最先在Zookeeper上创建临时节点/controller成功的Broker就是Controller
 https://blog.csdn.net/wypblog/article/details/121059218
 ```
-* leader副本的选举
-* 消费者相关的选举，Group Coordinator
+* leader副本的选举，见下一个段落详细讲解
+* Group Coordinator，负责消费组选主，严格意义上不能算是主的概念。
+  * 每个consumer group 都会选择一个broker作为自己的coordinator，他是负责监控整个消费组里的各个分区的心跳，以及判断是否宕机，和开启rebalance的。
+  * 首先对group id 进行hash，接着对_consumer_offsets的分区数量进行取模，默认分区数量是50_
+  * consumer_offsets的分区数量可以通过offsets.topic.num.partitions来设置，找到分区以后，这个分区所在的broker机器就是coordinator机器。 
+
 * 消费组选主
   * 在Kafka的消费端，会有一个消费者协调器以及消费组，组协调器（Group Coordinator）需要为消费组内的消费者选举出一个消费组的leader。
   * 如果消费组内还没有leader，那么第一个加入消费组的消费者即为消费组的leader，如果某一个时刻leader消费者由于某些原因退出了消费组，那么就会重新选举leader，选举方式如下：

@@ -45,10 +45,10 @@ ZAB协议要求每个leader都要经历三个阶段，即发现，同步，广�
   * leader可以接受客户端新的proposal请求，将新的proposal请求广播给所有的follower。
 
 * zk 从节点，怎么做同步的
-  * leader节点，发布提案，follower节点回复ack。
+  * leader节点，发布提案，follower节点回复ack
   * 一半以上的follower节点回复ack后，leader节点会发布commit命令，各个节点会更新本地的数据
-  * 那些未收到commit命令的节点，由于leader和follower的数据通信是FIFO队列，保证顺序的，所以在一下次leader请求通信之前，follower肯定要处理之前的commit请求，比如中间超时断联了 重新连接后，和leader重新同步数据，会严格按照顺序
-  * zk 在读方面，不是强一直性的，如果要求读的内容和leader节点是一致的，读取之前要使用sync方法，强行和leader节点保持一致。
+  * 那些未收到commit命令的节点，由于leader和follower的数据通信是FIFO队列，保证顺序的，所以在一下次leader请求通信之前，follower肯定要处理之前的commit请求，比如中间超时断联了重新连接后，和leader重新同步数据，会严格按照顺序
+  * zk 在读方面，不是强一直性的，如果要求读的内容和leader节点是一致的，读取之前要使用sync方法，强行和leader节点保持一致
 
 ## 有多个不同的写请求，是并行的还是串行的
 
@@ -93,14 +93,14 @@ if(outstandingProposals.containsKey(zxid-1)){
 这个时候当前的节点就会根据高32位知道目前leader已经切换过了，所以就把当前的消息删除，然后从新的leader同步数据，这样保证了数据一致性。
 
 ## 多个客户端读到的数据不一致
-zookeeper不保证读一致性，因为zookeeper写入成功的条件是一半node成功即成功，所以客户端连接到的node是失败的node则是老数据。如果要保证读到的数据是最新的，读取之前要使用sync方法，强行和主node保持一致。
+zookeeper不保证读一致性，因为zookeeper写入成功的条件是一半node成功即成功，所以客户端连接到的node是失败的node则是老数据。如果要保证读到的数据是最新的，读取之前要**使用sync方法**，强行和主node保持一致。
 
 ## ZAB 协议下，数据不一致的情况有哪些？
 1、当 leader 推送一个 commit 提交数据，刚自己提交了，但是他还没有吧 commit 提交给 follower 的时候，就已经挂掉了？
 
-  * 众多的 follower,开始半数选举机制，选出新的 leader 之后，发现本地磁盘上有没有提交的 proposal，然后查看别的 follower 也存在这样   的情况，这里的新 leader(是之前未接收到 commit 消息的 follower),然后我们开始发送 commit 给其他 follower，将数据写入 znode 节点中 解决客户端读取数据不一致的情况；
+  * 众多的 follower,开始半数选举机制，选出新的 leader 之后，发现本地磁盘上有没有提交的 proposal，然后查看别的 follower 也存在这样的情况，这里的新 leader(是之前未接收到 commit 消息的 follower)，然后我们开始发送 commit 给其他 follower，将数据写入 znode 节点中解决客户端读取数据不一致的情况；
 
-2、请求写数据操作的 leader 机器上，然后 leader，发送一个 proposal 提议，但是还没发出去，就挂了；导致本地磁盘日志文件中存在一个 proposal；但是其他的 follower 中没有这个数据；
+2、请求写数据操作的 leader 机器上，然后 leader发送一个 proposal 提议，但是还没发出去，就挂了；导致本地磁盘日志文件中存在一个 proposal；但是其他的 follower 中没有这个数据；
 
 * 已经宕机的 leader 存在一个 proposal 的提议，但是其他的 follow 没有收到，所以在恢复模式之后，新的 leader 被选择出来，开展写操作，但是发优先去查询一下本地磁盘中是否有之前遗留的 proposal 提议，查询到一个 follower(之前宕机的发送的一个 proposal 的 leader)磁盘数据与其他的不一致，然后现在的新 leader 将会同步数据给其他的 follower，之前宕机的 leader 存在一个的提议（proposal 提议）会被舍弃掉
 
@@ -114,7 +114,7 @@ Zookeeper 的核心是原子广播机制，这个机制保证了各个 server �
 在正常情况下运行非常良好，一旦 Leader 出现崩溃或者由于网络原因导致 Leader 服务器失去了与过半 Follower 的联系，那么就会进入崩溃恢复模式。为了程序的正确运行，整个恢复过程后需要选举出一个新的 Leader,因此需要一个高效可靠的选举方法快速选举出一个 Leader。
 
 ### 广播模式
-类似一个两阶段提交过程，针对客户端的事务请求， Leader 服务器会为其生成对应的事务 Proposal,并将其发送给集群中的其余所有机器，再分别收集各自的选票，最后进行事务提交。
+类似一个两阶段提交过程，针对客户端的事务请求， Leader 服务器会为其生成对应的事务 Proposal，并将其发送给集群中的其余所有机器，再分别收集各自的选票，最后进行事务提交。
 
 ## 哪些情况会导致 ZAB 进入恢复模式并选取新的 Leader
 1、集群启动，这个时候需要选举出新的Leader
@@ -132,7 +132,7 @@ Zookeeper 有三种部署模式：
 client 端会对某个 znode 建立一个 watcher 事件，当该 znode 发生变化时，这些 client 会收到 zk 的通知，然后 client 可以根据 znode 变化来做出业务上的改变等。
 
 ## Watcher监听机制的工作原理
-![alt](https://img-stage.yit.com/CMSRESQN/26144e42687eb7e83970728c382e9fd3_1492X1022.png)
+![alt](assets/watcher.png)
 
 ZooKeeper的Watcher机制主要包括客户端线程、客户端 WatcherManager、Zookeeper服务器三部分。
 
@@ -149,7 +149,7 @@ ZooKeeper的Watcher机制主要包括客户端线程、客户端 WatcherManager�
 * 触发watcher，用create、delete、setData方法
 
 ## 什么是会话 Session
-指的是客户端会话，客户端启动时，会与服务器建议 TCP 链接，连接成功后，客户端的生命周期开始，客户端和服务器通过心跳检测保持有效的的会话以及发请求并响应、监听 Watch 事件等。
+指的是客户端会话，客户端启动时会与服务器建议 TCP 链接，连接成功后，客户端的生命周期开始，客户端和服务器通过心跳检测保持有效的的会话以及发请求并响应、监听 Watch 事件等。
 
 [Zookeeper Session机制](https://jimmy2angel.github.io/2019/01/12/Zookeeper-Session%E6%9C%BA%E5%88%B6/)
 
@@ -157,7 +157,7 @@ ZooKeeper的Watcher机制主要包括客户端线程、客户端 WatcherManager�
 在分布式环境中，有些业务逻辑只需要集群中的某一台机器进行执行，其他的机器可以共享这个结果，这样可以大大减少重复计算，提高性能，于是就需要进行 leader 选举。
 
 
-## lead选举
+## leader选举
 数据模型
 投票信息中包含两个最基本的信息。
 
@@ -167,10 +167,11 @@ ZooKeeper的Watcher机制主要包括客户端线程、客户端 WatcherManager�
 规则
 集群中的每台机器发出自己的投票后，也会接受来自集群中其他机器的投票。每台机器都会根据一定的规则，来处理收到的其他机器的投票，以此来决定是否需要变更自己的投票。
 规则如下：
+
 * 初始阶段，都会给自己投票。
 *  当接收到来自其他服务器的投票时，都需要将别人的投票和自己的投票进行pk，规则如下：
 * 优先检查zxid。zxid比较大的服务器优先作为leader。
-* 如果zxid相同的话，就比较sid，sid比较大的服务器作为leader。
+* 如果zxid相同的话，就比较sid，**sid大的**服务器作为leader。
 
 ## 集群中有 3 台服务器，其中一个节点宕机，这个时候 Zookeeper 还可以使用吗
 可以继续使用，单数服务器只要没超过一半的服务器宕机就可以继续使用。
@@ -218,8 +219,12 @@ Zookeeper 集群的机制是只要超过半数的节点正常，集群就能正�
   * ZK的Quorum机制其实就是要求集群中过半的节点是正常的，所以ZK集群包含奇数个节点比偶数个节点要更好。显然，如果集群有6个节点的话，Quorum size是4，即能够容忍2个节点失败，而5个节点的集群同样能容忍2个节点失败，所以可靠性是相同的。偶数节点还需要额外多管理一个节点，不划算。
 
 ## Zookeeper 和 Dubbo 的关系
-* Dubbo 的将注册中心进行抽象，是得它可以外接不同的存储媒介给注册中心提供服务，有 ZooKeeper，Memcached，Redis 等。
+* Dubbo 将注册中心进行抽象，使得它可以外接不同的存储媒介给注册中心提供服务，有 ZooKeeper，Memcached，Redis 等。
 * 命名服务，将树状结构用于维护全局的服务地址列表，服务提供者在启动 的时候，向 ZooKeeper 上的指定节点 /dubbo/${serviceName}/providers 目录下写入自己的 URL 地址，这个操作就完成了服务的发布。
+
+
+
+## 参考文档
 
 [Zookeeper 一致性的保证](https://juejin.cn/post/7023285737139208206)
 [ZooKeeper运维——数据备份与恢复](https://blog.51cto.com/stefanxfy/4722107#ZooKeeper_215)
