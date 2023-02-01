@@ -68,7 +68,7 @@ public void testUserList(){
 
 ## spring-mybatis 使用回顾
 ```
-mybatis使用过程的前三步基本配置不变
+mybatis使用过程的前三步基本配置不变，然后将加载配置自动化，mapper注入自动化
 
 4.配置SqlSessionFactoryBean可自动获取SqlSessionFactory，相当于mybatis使用过程的第四步
 <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
@@ -98,8 +98,9 @@ public class PlanTest extends BaseTest {
 
 ## 实现原理概述
 ```
-1.BeanFactory创建后，MapperScannerConfigurer扫描包，查找Mapper接口,注册对应代理bd
-2.创建Mapper实例时生成代理对象
+1.配置MapperScannerConfigurer，此类是BeanDefinitionRegistryPostProcessor的实现，MapperScannerConfigurer扫描配置包，查找Mapper接口，注册对应代理bd。此时bd的class指定的是MapperFactoryBean
+2.由MapperFactoryBean创建对应的Mapper代理实例
+3.SqlSessionTemplate封装了事务并执行命令
 ```
 
 ## SqlSessionFactoryBean解析
@@ -216,7 +217,52 @@ ssi-->ss:
 ss-->mm:
 mm-->mp:
 ```
+* spring-mybatis 自动提交事务实现
+```java
+    
+/****org.mybatis.spring.SqlSessionTemplate.SqlSessionInterceptor****/
+  private class SqlSessionInterceptor implements InvocationHandler {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+      SqlSession sqlSession = getSqlSession(SqlSessionTemplate.this.sqlSessionFactory,
+          SqlSessionTemplate.this.executorType, SqlSessionTemplate.this.exceptionTranslator);
+      try {
+        Object result = method.invoke(sqlSession, args);
+        //判断事务是否由Spring托管
+        if (!isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
+          // force commit even on non-dirty sessions because some databases require
+          // a commit/rollback before calling close()
+          // 非提交事务方法，每次执行完，都提交一次。如果是事务的话，靠spring去提交
+          sqlSession.commit(true);
+        }
+        return result;
+      } catch (Throwable t) {
+        Throwable unwrapped = unwrapThrowable(t);
+        if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
+          // release the connection to avoid a deadlock if the translator is no loaded. See issue #22
+          closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
+          sqlSession = null;
+          Throwable translated = SqlSessionTemplate.this.exceptionTranslator
+              .translateExceptionIfPossible((PersistenceException) unwrapped);
+          if (translated != null) {
+            unwrapped = translated;
+          }
+        }
+        throw unwrapped;
+    }
+    
+    
+    public static boolean isSqlSessionTransactional(SqlSession session, SqlSessionFactory sessionFactory) {
+    notNull(session, NO_SQL_SESSION_SPECIFIED);
+    notNull(sessionFactory, NO_SQL_SESSION_FACTORY_SPECIFIED);
 
+    // 从 TransactionSynchronizationManager 中，获得 SqlSessionHolder 对象
+    SqlSessionHolder holder = (SqlSessionHolder) TransactionSynchronizationManager.getResource(sessionFactory);
+
+    // 如果相等，说明在 Spring 托管的事务中
+    return (holder != null) && (holder.getSqlSession() == session);
+  }
+```
 
 ## 参考文档
 [MyBatis 源码分析 - MyBatis-Spring 源码分析](https://www.cnblogs.com/lifullmoon/p/14015235.html)

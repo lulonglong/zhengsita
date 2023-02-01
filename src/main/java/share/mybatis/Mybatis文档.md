@@ -7,7 +7,7 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 ## 实现原理
 
 ### 架构设计
-![avator](https://img-stage.yit.com/CMSRESQN/f5cb72fcfcf42dabf9c3b7c168102adb_1812X1208.png)
+![avator](assets/f5cb72fcfcf42dabf9c3b7c168102adb_1812X1208.png)
 
 ### 总体流程
 * 加载并初始化配置
@@ -27,10 +27,11 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
   
 * 总体流程图
 
-![avator](https://img-stage.yit.com/CMSRESQN/e6d4416469c187b04cc570031ba5625c_1742X2238.jpeg)
+![avator](assets/e6d4416469c187b04cc570031ba5625c_1742X2238.png)
 
 * 初始化配置核心源码
-```
+```java
+/****org.apache.ibatis.builder.xml.XMLConfigBuilder#parse->parseConfiguration****/
 
     /**
 	 * 解析核心配置文件
@@ -72,8 +73,8 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 * 是Mybatis工作的主要API，表示和数据库交互的会话
 * 可以理解为 SqlSession 是对 JDBC操作的connection对象进行了一次封装。
 * DefaultSqlSession，Mybatis 默认提供的SqlSession，是线程不安全的
-* SqlSessionManager，Mybatis 默认提供的SqlSession，是线程安全的
-* SqlSessionTemplate，是Mybatis与Spring 整合时的线程安全SqlSession
+* SqlSessionManager，是线程安全的
+* SqlSessionTemplate，是spring-mybatis中的线程安全SqlSession，封装了事务
 * 缓存管理
   * 一级缓存，默认是开启的，没找到能关掉的地方。作用在同一个SqlSession
   * 二级缓存，可配置，默认是关闭的，作用在不同的SqlSession中
@@ -92,8 +93,8 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 	  * 在传统的 JDBC 编程中，重用 Statement 对象是常用的一种优化手段，该优化手段可以减少 SQL 预编译的开销以及创建和销毁 Statement 对象的开销，从而提高性能。ReuseExecutor 提供了 Statement 重用功能，ReuseExecutor 中通过 statementMap 字段 缓存使用过的 Statement 对象，key 是 SQL 语句，value 是 SQL 对应的 Statement 对象
 
 * SimpleExecutor
-```
-    @Override
+```java
+  @Override
 	public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
 		Statement stmt = null;
 		try {
@@ -118,7 +119,7 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 
 ### MappedStatement
 
-* 把每一条sql(select | update | delete | insert) 节点封装为一个 MapperStatement
+* 把XML中的每一条sql(select | update | delete | insert) 节点封装为一个 MapperStatement
 * 主要属性
   * SqlSource
   * useCache 默认是false。为true的话，则开始的是二级缓存
@@ -132,8 +133,8 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 * RoutingStatementHandler : 是以上三个接口的路由，没有实际操作，只是负责上面三个StatementHandler的创建及调用
 
 * SimpleStatementHandler
-```
-    @Override
+```java
+  @Override
 	public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
 
 	    // 获取原始sql
@@ -178,9 +179,10 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
   * 结果集处理器 ResultSetHandler (handleResultSets, handleOutputParameters)
     
 ## Mapper接口
-* 项目中编写的Mapper接口，是并没有实现类，是如何和xml文件的sql对应起来的
-* mapper接口注册的时候，通过JDK动态代理，注册MapperProxy代理类，每个方法会生成一个MapperMethod对象
-* 通过全限定名，也就是statementId，确定映射关系
+* 项目中编写的Mapper接口，并没有实现类，是如何和xml文件的sql对应起来的？
+  * mapper接口注册的时候，通过JDK动态代理，注册MapperProxy代理类，每个方法会生成一个MapperMethod对象
+  * 通过全限定名，也就是statementId，确定映射关系
+
 
 ### MapperProxy
 * Mapper接口的实现类
@@ -193,7 +195,7 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 ## 自定义插件
 * share.mybatis.ExamplePlugin
 * mybatis-config.xml中要注册插件
-```
+```xml
     <plugins>
         <plugin interceptor="share.mybatis.ExamplePlugin"/>
     </plugins>
@@ -205,20 +207,17 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 * Transaction: 
   * Mybatis 的事务接口
     * 获取Connection链接，提交事务，关闭事务，回滚
-
   * JdbcTransaction，单独使用Mybatis时，默认的事务管理实现类。
     * autoCommit：true，自动提交事务，每次执行dml时，都会提交
     * autoCommit：false, 手动提交事务，sql操作完成后，需手动执行sqlSession.commit()
-    
   * ManagedTransaction，含义为托管事务，空壳事务管理器，皮包公司。
     * 仅是提醒用户，在其它环境中应用时，把事务托管给其它框架，比如托管给Spring，让Spring去管理事务  
-
   * SpringManagedTransaction
-    * org.mybatis.spring.transaction.SpringManagedTransaction，Spring中Mybatis管理事务的实现类
-    * JdbcTransaction的commit
+    * org.mybatis.spring.transaction.SpringManagedTransaction，Spring-Mybatis管理事务的实现类
 
-```
-  @Override
+```java
+  /****org.apache.ibatis.transaction.jdbc.JdbcTransaction#commit****/
+	@Override
   public void commit(boolean required) throws SQLException {
     if (closed) {
       throw new ExecutorException("Cannot commit, transaction is already closed");
@@ -231,69 +230,6 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
   }
 
 ```
-
-* mybatis 自动提交事务实现
-```
-
-  @Override
-  public void afterPropertiesSet() throws Exception {
-    notNull(dataSource, "Property 'dataSource' is required");
-    notNull(sqlSessionFactoryBuilder, "Property 'sqlSessionFactoryBuilder' is required");
-    state((configuration == null && configLocation == null) || !(configuration != null && configLocation != null),
-              "Property 'configuration' and 'configLocation' can not specified with together");
-
-    this.sqlSessionFactory = buildSqlSessionFactory();
-  }
-
- 
-  protected SqlSessionFactory buildSqlSessionFactory() throws Exception {
-
-    ...
-
-    // 设置环境，包括数据源，事务管理器
-    targetConfiguration.setEnvironment(new Environment(this.environment,
-        this.transactionFactory == null ? new SpringManagedTransactionFactory() : this.transactionFactory,
-        this.dataSource));
-        
-    ...    
-
-    return this.sqlSessionFactoryBuilder.build(targetConfiguration);
-  }
-  
-  SqlSessionTemplate
-  private class SqlSessionInterceptor implements InvocationHandler {
-    @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-      SqlSession sqlSession = getSqlSession(SqlSessionTemplate.this.sqlSessionFactory,
-          SqlSessionTemplate.this.executorType, SqlSessionTemplate.this.exceptionTranslator);
-      try {
-        Object result = method.invoke(sqlSession, args);
-        if (!isSqlSessionTransactional(sqlSession, SqlSessionTemplate.this.sqlSessionFactory)) {
-          // force commit even on non-dirty sessions because some databases require
-          // a commit/rollback before calling close()
-          
-          // 非提交事务方法，每次执行完，都提交一次。如果是事务的话，靠spring去提交
-          sqlSession.commit(true);
-        }
-        return result;
-      } catch (Throwable t) {
-        Throwable unwrapped = unwrapThrowable(t);
-        if (SqlSessionTemplate.this.exceptionTranslator != null && unwrapped instanceof PersistenceException) {
-          // release the connection to avoid a deadlock if the translator is no loaded. See issue #22
-          closeSqlSession(sqlSession, SqlSessionTemplate.this.sqlSessionFactory);
-          sqlSession = null;
-          Throwable translated = SqlSessionTemplate.this.exceptionTranslator
-              .translateExceptionIfPossible((PersistenceException) unwrapped);
-          if (translated != null) {
-            unwrapped = translated;
-          }
-        }
-        throw unwrapped;
-    }
-  
-
-```
-
 
 ## 和spring结合
 * 引入mybatis-spring pom
@@ -322,9 +258,10 @@ ORM 全称Object Relation Mapping，表示对象-关系映射的缩写。采用O
 
 #### 动态代理
 * JDK动态代理 java.lang.reflect.InvocationHandler
-* cglib ?
 
-###参考文档
+
+
+## 参考文档
 [MyBatis拦截器机制](https://www.cnblogs.com/54chensongxia/p/11850626.html)
 [MyBatis原理系列](https://www.jianshu.com/p/4e268828db48)
 [Mybatis源码](https://github.com/lyxiang/mybatis-3)

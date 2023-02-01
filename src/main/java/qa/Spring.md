@@ -7,9 +7,8 @@
 
 2. 怎么理解控制反转(IOC)/依赖注入(DI)
 ```
-把复杂系统的对象通过引入第三方组件封装以后，将内部实现对外部透明，从而降低了对象间的耦合，这个组件就是Spring
-对象A获得依赖对象B的过程，由主动行为变为了被动行为，”控制权“颠倒过来了，这就是“控制反转”这个名称的由来。哪些方面的控制被反转了呢？获得"依赖对象的过程"被反转了。控制被反转之后，获得依赖对象的过程由自身管理变为了由IOC容器主动注入。于是，可以给“控制反转”取一个更合适的名字叫做“依赖注入“。
-所以，依赖注入(DI)和控制反转(IOC)是从不同的角度的描述的同一件事情，就是指通过引入IOC容器，利用依赖关系注入的方式，实现对象之间的解耦。
+把复杂系统的对象通过引入第三方组件封装以后，将内部实现对外部透明，从而降低了对象间的耦合，这个组件就是Spring。对象A获得·依赖对象B的过程·，由主动行为变为了被动行为，”控制权“颠倒过来了，这就是“控制反转”这个名称的由来。哪些方面的控制被反转了呢？获得"依赖对象的过程"被反转了。控制被反转之后，获得依赖对象的过程由自身管理变为了由IOC容器主动注入。于是，可以给“控制反转”取一个更合适的名字叫做“依赖注入“。
+所以，依赖注入(DI)和控制反转(IOC)是从不同的角度描述的同一件事情，就是指通过引入IOC容器，利用依赖关系注入的方式，实现对象之间的解耦。
 ```
  ![alt](assets/d737d7c75749465da206ed7c4f06c061.png)
  ![alt](assets/ioc.png)
@@ -22,14 +21,15 @@ FactoryBean：仅仅是一个可以创建对象的工厂，当定义一个Bean�
         <property name="dataSource" ref="dataSource"/>
         <property name="configLocation" value="classpath:mybatis-config.xml"/>
 </bean>
-##dubbo consumer的代理对象就是通过FactoryBean创建出来的代理对象
+## dubbo consumer的代理对象也是通过FactoryBean创建出来的代理对象
+## spring-mybatis中的Mapper实例是由FactoryBean的实现类MapperFactoryBean生成的
 ```
 
 4. BeanFactory和ApplicationContext有什么区别
 ```
 BeanFactory和ApplicationContext是Spring的两大核心接口，都可以当做Spring的容器
 BeanFactory是Spring里面最底层的接口，是IoC的核心，定义了IoC的基本功能，包含了各种Bean的定义、加载、实例化，依赖注入和生命周期管理。ApplicationContext接口作为BeanFactory的子类，除了提供BeanFactory所具有的功能外，还提供了更完整的框架功能。
-ApplicationContext内部持有BeanFactory的实例
+ApplicationContext内部还需要持有BeanFactory的实例
 ```
 
 5. BeanDefinition是什么
@@ -44,6 +44,7 @@ bean定义信息，包括class、构造函数以及属性等
 BeanPostProcessor常用子类：
 InstantiationAwareBeanPostProcessor：实例化前后的处理
 MergedBeanDefinitionPostProcessor：实例化时对bd的进一步丰富，@Autowired的应用
+AutoProxyCreator：在AOP中自动创建代理类
 ```
  ![alt](assets/3470413121-2abed99e085c254a.png)
 
@@ -52,7 +53,8 @@ MergedBeanDefinitionPostProcessor：实例化时对bd的进一步丰富，@Autow
 BeanFactory的后置处理器，可以对BeanFactory进行自定义的扩展，例如增加或修改BeanDefinition
 
 BeanFactoryPostProcessor常用子类实现：
-BeanDefinitionRegistryPostProcessor，spring-mybatis的mapper加载就是通过这个实现的
+BeanDefinitionRegistryPostProcessor：spring-mybatis的mapper加载就是通过这个实现的
+ReloadingPropertyPlaceholderConfigurer：disconf会扫描有占位符的bd
 ```
 
 8. Aware接口有什么特性
@@ -70,10 +72,9 @@ BeanNameAware让实现类感知并拿到BeanName
 次要流程省略，重要流程如下几步：
 1.prepareRefresh，加载环境变量
 2.obtainFreshBeanFactory，创建BeanFactory，加载BeanDefinition
-3.prepareBeanFactory，完善BeanFactory，添加容器内置实例
-4.invokeBeanFactoryPostProcessors，调用BeanFactoryPostProcessor
-5.registerBeanPostProcessors，实例化BeanPostProcessor
-6.finishBeanFactoryInitialization，实例化剩余的&非懒加载的单例bean
+3.invokeBeanFactoryPostProcessors，调用BeanFactoryPostProcessor
+4.registerBeanPostProcessors，实例化BeanPostProcessor
+5.finishBeanFactoryInitialization，实例化剩余的&非懒加载的单例bean
 ```
 
 10. Spring Bean的生命周期
@@ -104,7 +105,7 @@ BeanNameAware让实现类感知并拿到BeanName
 13. 如何解析自定义标签
 
 ```
-Spring在解析xml时，会读取所有Jar包下的META-INF/spring.handlers文件。我们只需要定义自己的Namespace并配置相应的NamespaceHandler解析类即可。如下所示：
+Spring在解析xml时，会读取所有Jar包下的META-INF/spring.handlers文件。我们只需要定义自己的Namespace并配置相应的NamespaceHandler解析类到META-INF/spring.handlers文件即可。如下所示：
 http\://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler
 ```
 
@@ -182,7 +183,7 @@ Bean的创建过程会把实例化后的Bean通过ObjectFactory预先暴露出�
 
 20. Spring的异步支持
 ```
-1. 使用@Async注解,在xml中开启 <task:annotation-driven>
+1. 使用@Async注解,在xml中开启 <task:annotation-driven>（命名空间在context模块）
 如果在@Aysnc中没有指定线程池（可以指定），会默认使用spring提供的默认线程池SimpleAsyncTaskExecutor，线程池为每个任务都单独创建一个线程，不会重用线程
 2. 使用Spring内置线程池ThreadPoolTaskExecutor
 ```
@@ -226,9 +227,12 @@ Aspect：对切点和增强的整体定义作为一个完整的切面定义
 
 3. Spring是怎么实现AOP的？
 ```
-1.通过AopNamespaceHandler解析<aop:aspectj-autoproxy />，注册自动代理创建类AbstractAutoProxyCreator，实现了InstantiationAwareBeanPostProcessor接口
-2.Bean实例化时，解析全部@Aspect注解类，提取PointCut和Advice信息
-3.每个Bean实例化后，过滤Advice看是否需要对该Bean做AOP处理，如果需要则生成代理对象
+1.入口是在配置文件中配置aop:aspectj-autoproxy标签开启AOP
+2.在spring-aop模块META-INF/spring.handlers文件中配置了自定义命名空间解析器，对应配置如下:
+http\://www.springframework.org/schema/aop=org.springframework.aop.config.AopNamespaceHandler。Spring会加载‘=’后边的配置类解析‘=’前边的命名空间
+3.通过AopNamespaceHandler解析<aop:aspectj-autoproxy />，注册自动代理创建类AnnotationAwareAspectJAutoProxyCreator，这个类是BeanPostProcessor的实现
+4.在Bean实例化阶段，才延迟触发自动代理创建类解析所有@Aspect注解类，提取PointCut和Advice信息，并不是在自动代里创建类实例化时解析所有@Aspect注解类
+5.然后过滤Advice看是否需要对该Bean做AOP处理，如果需要则生成代理对象
 ```
 
 4. Advice类型有哪些？
@@ -267,10 +271,13 @@ Aspect：对切点和增强的整体定义作为一个完整的切面定义
 # 事务
 1. Spring事务是怎么实现的？
 ```
-1.通过TxNamespaceHandler解析<tx:annotation-driven />，注册Advisor和处理事务的方法拦截器。
-2.Bean实例化时，通过AOP筛选带有@Transactional注解的类，应用Advisor生成代理实例
-3.执行事务方法时生成事务信息，并与当前线程绑定
-4.在方法正常执行的情况下提交事务，执行异常时回滚事务
+1.入口是在配置文件中配置<tx:annotation-driven />标签开启事务
+2.在spring-tx模块META-INF/spring.handlers文件中配置了自定义命名空间解析器，对应配置如下:
+http\://www.springframework.org/schema/tx=org.springframework.transaction.config.TxNamespaceHandler。Spring会加载‘=’后边的配置类解析‘=’前边的命名空间
+3.通过TxNamespaceHandler解析<tx:annotation-driven />，注册Advisor和处理事务的方法拦截器。此处就相当于走完了AOP的流程，后续就是执行AOP的步骤了
+4.Bean实例化时，通过AOP筛选带有@Transactional注解的类，应用Advisor生成代理实例
+5.执行事务方法时生成事务信息，并与当前线程绑定
+6.在方法正常执行的情况下提交事务，执行异常时回滚事务
 ```
 
 2. Spring的事务传播机制？
@@ -288,19 +295,29 @@ Spring中每个事务都可以指定不同的隔离级别，底层利用了数�
 @Transactional 应用在非 public 修饰的方法上
 被同一个类中的方法调用，导致 @Transactional 失效
 ```
-5. 为什么@Transactional建议标记在方法上而不是类或者接口上
 
+5. 为什么@Transactional建议标记在方法上而不是类或者接口上
 ```
 在Spring 事务的实现中，方法开始时就拿到连接开启事务。如果加到类上会导致没有出现数据库操作的方法也会占用数据库连接。
 ```
 
-   
+6. 事务拦截器是怎么拿到数据源的？
+```
+从BeanFactory中获取DataSourceTransactionManager，DataSourceTransactionManager是在配置文件中配置的，里边需要设置数据源
+```
+
 
 # Spring-Mybatis
 1. 启动流程
 ```
-1.BeanFactory创建后，MapperScannerConfigurer扫描包，查找Mapper接口,注册对应代理bd
-2.创建Mapper实例时生成代理对象
+1.配置MapperScannerConfigurer，此类是BeanDefinitionRegistryPostProcessor的实现，MapperScannerConfigurer扫描配置包，查找Mapper接口，注册对应代理bd。此时bd的class指定的是MapperFactoryBean
+2.由MapperFactoryBean创建对应的Mapper代理实例
+3.SqlSessionTemplate封装了事务并执行命令
+```
+
+2. SqlSessionTemplate是如何与Spring的事务管理互相配合的
+```
+SqlSessionTemplate的语句执行完毕后，会检测事务是否交给spring托管，如果是则不进行commit，如果不是才进行commit
 ```
 
 # 高级篇

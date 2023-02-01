@@ -2,7 +2,7 @@
 
 ## JDBC 有几个步骤
 JDBC 大致可以分为六个步骤：
-* 加载驱动程序
+* 加载驱动程序，驱动程序是对JDBC规范完整的实现，它的存在在JAVA程序与数据库系统之间建立了一条通信的渠道
 * 获得数据库连接
 * 创建一个 Statement 对象
 * 操作数据库，实现增删改查
@@ -59,7 +59,7 @@ Hibernate 属于全自动 ORM 映射工具，使用 Hibernate 查询关联对象
 ## MyBatis使用过程？生命周期？
 MyBatis基本使用的过程大概可以分为这么几步：
 
-![mybatis-life](https://img-stage.yit.com/CMSRESQN/c2b0d8b8a56db511609580d7cb5b93a2_1284X980.png)
+![mybatis-life](assets/c2b0d8b8a56db511609580d7cb5b93a2_1284X980.png)
 
 * 创建SqlSessionFactory
 ```
@@ -71,9 +71,7 @@ SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(input
 * 通过SqlSessionFactory创建SqlSession
 ```
 SqlSession（会话）可以理解为程序和数据库之间的桥梁
-
 SqlSession session = sqlSessionFactory.openSession();
-
 SqlSession openSession(boolean autoCommit);
 ```
 
@@ -117,7 +115,7 @@ MyBatis中有一些支持动态SQL的标签，它们的原理是使用OGNL从SQL
 
 缓存有两个级别，SqlSession和Statement。默认是SqlSession。配置成Statement，可以认为关闭一级缓存。
 
-![redis first cache](https://img-stage.yit.com/CMSRESQN/5007e13190a67aae9ee654e4d679be52_1366X592.png)
+![redis first cache](assets/5007e13190a67aae9ee654e4d679be52_1366X592.png)
 
 ### 二级缓存
 * 二级缓存与一级缓存其机制相同，默认也是采用 PerpetualCache，HashMap 存储，不同之处在于其存储作用域为 Mapper(Namespace)，可以在多个SqlSession之间共享
@@ -127,7 +125,7 @@ MyBatis中有一些支持动态SQL的标签，它们的原理是使用OGNL从SQL
 * <setting name="cacheEnabled"value="true"/>
 
 ## 工作流程
-![mybatis-flow](https://img-stage.yit.com/CMSRESQN/5d6ead62ec6c18c288f42ce9178d49e2_1474X1372.png)
+ ![mybatis-flow](assets/5d6ead62ec6c18c288f42ce9178d49e2_1474X1372.png)
 
 1、读取 MyBatis 配置文件——mybatis-config.xml 、加载映射文件——映射文件即 SQL 映射文件，文件中配置了操作数据库的 SQL 语句。最后生成一个配置对象。
 
@@ -144,7 +142,7 @@ MyBatis中有一些支持动态SQL的标签，它们的原理是使用OGNL从SQL
 7、结果处理：对返回结果的类型进行处理，根据对象映射规则，返回相应的对象
 
 ## MyBatis的功能架构是什么样的
-![mybatis-struct](https://img-stage.yit.com/CMSRESQN/e263ee30e3826cdbf3c7c5e5baf277c4_1320X916.png)
+![mybatis-struct](assets/e263ee30e3826cdbf3c7c5e5baf277c4_1320X916.png)
 
 我们一般把Mybatis的功能架构分为三层：
 * API接口层：提供给外部使用的接口API，开发人员通过这些本地API来操纵数据库。接口层一接收到调用请求就会调用数据处理层来完成具体的数据处理。
@@ -160,10 +158,10 @@ MyBatis中有一些支持动态SQL的标签，它们的原理是使用OGNL从SQL
 BlogMapper mapper = session.getMapper(BlogMapper.class);
 ```
 
-![mybatis-mapper](https://img-stage.yit.com/CMSRESQN/d38b7809130fa4097128ab4afc471b60_1350X1090.png)
+![mybatis-mapper](assets/d38b7809130fa4097128ab4afc471b60_1350X1090.png)
 
 获取Mapper的过程，需要先获取MapperProxyFactory——Mapper代理工厂。
-```
+```java
     public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
         MapperProxyFactory<T> mapperProxyFactory = (MapperProxyFactory)this.knownMappers.get(type);
         if (mapperProxyFactory == null) {
@@ -195,7 +193,7 @@ BlogMapper mapper = session.getMapper(BlogMapper.class);
 
 MapperProxy里，通常会生成一个MapperMethod对象，它是通过cachedMapperMethod方法对其进行初始化的，然后执行execute方法。
 
-```
+```java
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         try {
           if (Object.class.equals(method.getDeclaringClass())) {
@@ -214,7 +212,7 @@ MapperProxy里，通常会生成一个MapperMethod对象，它是通过cachedMap
 ### MapperMethod
 MapperMethod里的execute方法，会真正去执行sql。这里用到了命令模式，其实绕一圈，最终它还是通过SqlSession的实例去运行对象的sql。
 
-```
+```java
     public Object execute(SqlSession sqlSession, Object[] args) {
         Object result;
         Object param;
@@ -245,16 +243,16 @@ MapperMethod里的execute方法，会真正去执行sql。这里用到了命令�
 ## Mybatis都有哪些Executor执行器
 Mybatis有三种基本的Executor执行器，SimpleExecutor、ReuseExecutor、BatchExecutor。
 
-* SimpleExecutor：每执行一次update或select，就开启一个Statement对象，用完立刻关闭Statement对象。
+* SimpleExecutor（默认）：每执行一次update或select，就开启一个Statement对象，用完立刻关闭Statement对象。
 * ReuseExecutor：执行update或select，以sql作为key查找Statement对象，存在就使用，不存在就创建，用完后，不关闭Statement对象，而是放置于Map<String, Statement>内，供下一次使用。简言之，就是重复使用Statement对象。
 * BatchExecutor：执行update（没有select，JDBC批处理不支持select），将所有sql都添加到批处理中（addBatch()），等待统一执行（executeBatch()），它缓存了多个Statement对象，每个Statement对象都是addBatch()完毕后，等待逐一执行executeBatch()批处理。与JDBC批处理相同。
 
-作用范围：Executor的这些特点，都严格限制在SqlSession生命周期范围内。
+作用范围：Executor的这些特点，都严格限制在SqlSession生命周期范围内，这也是ReuseExecutor用处不大的原因，所以默认采用SimpleExecutor。
 
 ## Mybatis的插件运行原理
 Mybatis会话的运行需要ParameterHandler、ResultSetHandler、StatementHandler、Executor这四大对象的配合，插件的原理就是在这四大对象调度的时候，插入一些我我们自己的代码。
 
-![mybatis-plugin](https://img-stage.yit.com/CMSRESQN/8e9d08dcbe12fd6a059c7ef2fff0b549_1584X954.png)
+![mybatis-plugin](assets/8e9d08dcbe12fd6a059c7ef2fff0b549_1584X954.png)
 
 Mybatis使用JDK的动态代理，为目标对象生成代理对象。它提供了一个工具类Plugin，实现了InvocationHandler接口。在invoke方法中，执行拦截链的拦截方法。
 
@@ -266,7 +264,7 @@ Mybatis使用JDK的动态代理，为目标对象生成代理对象。它提供�
 ### 实现原理
 从配置文件解析开始分析，我们知道创建会话工厂时，会使用XMLConfigBuilder#parseConfiguration方法解析每个标签，刚刚注册插件时，使用的标签是plugins，我们跟踪下这个标签的解析。
 
-```
+```java
 private void pluginElement(XNode parent) throws Exception {
     if (parent != null) {
         // 遍历 <plugins /> 的子标签
@@ -288,7 +286,7 @@ private void pluginElement(XNode parent) throws Exception {
 
 在创建SqlSession时，需要先实例化Executor对象，调用configuration#newExecutor方法，该方法先通过构造方法创建Executor对象，接着调用拦截器链的pluginAll方法，估计此时返回的是执行器代理对象。
 
-```
+```java
  private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
@@ -329,7 +327,7 @@ private void pluginElement(XNode parent) throws Exception {
 
 使用Plugin生成代理对象，代理对象在调用方法的时候，就会进入invoke方法，在invoke方法中，如果存在签名的拦截方法，插件的intercept方法就会在这里被我们调用，然后就返回结果。如果不存在签名方法，那么将直接反射调用我们要执行的方法。
 
-```
+```java
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
@@ -345,7 +343,7 @@ private void pluginElement(XNode parent) throws Exception {
 ```
 
 ### 实现一个插件
-```
+```java
 @Intercepts({
 		// 可定义多个@Signature对多个接口拦截
 		@Signature(
@@ -398,7 +396,7 @@ public class ExamplePlugin implements Interceptor {
 
   * SpringManagedTransaction
     * org.mybatis.spring.transaction.SpringManagedTransaction，Spring中Mybatis管理事务的实现类
-```
+```java
   @Override
   public void commit(boolean required) throws SQLException {
     if (closed) {
@@ -428,5 +426,7 @@ https://pdai.tech/md/framework/orm-mybatis/mybatis-y-datasource.html
 
 
 
+
+## 参考文档
 [MyBatis面试题八股文](https://tobebetterjavaer.com/sidebar/sanfene/mybatis.html)
 

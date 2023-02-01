@@ -13,10 +13,13 @@ TransactionInterceptor：Spring 事务 MethodInterceptor 实现，事务拦截�
 
 ## 原理概括
 
-	1.通过TxNamespaceHandler解析<tx:annotation-driven />，注册Advisor和处理事务的方法拦截器。
-	2.Bean实例化时，通过AOP筛选带有@Transactional注解的类，应用Advisor生成代理实例
-	3.执行事务方法时生成事务信息，并与当前线程绑定
-	4.在方法正常执行的情况下提交事务，执行异常时回滚事务
+	1.入口是在配置文件中配置<tx:annotation-driven />标签开启事务
+	2.在spring-tx模块META-INF/spring.handlers文件中配置了自定义命名空间解析器，对应配置如下:
+	http\://www.springframework.org/schema/tx=org.springframework.transaction.config.TxNamespaceHandler。Spring会加载‘=’后边的配置类解析‘=’前边的命名空间
+	3.通过TxNamespaceHandler解析<tx:annotation-driven />，注册Advisor和处理事务的方法拦截器。此处就相当于走完了AOP的流程，后续就是执行AOP的步骤了
+	4.Bean实例化时，通过AOP筛选带有@Transactional注解的类，应用Advisor生成代理实例
+	5.执行事务方法时生成事务信息，并与当前线程绑定
+	6.在方法正常执行的情况下提交事务，执行异常时回滚事务
 
 
 ## 注册Advisor
@@ -107,13 +110,13 @@ configurer-->parser:
 ```
 
 	AnnotationTransactionAttributeSource类图
-![alt AnnotationTransactionAttributeSource](https://asset-i7.yit.com/URDM/c3460e7c7e619c4bf9e3907c0a9114f3_1116X1026.png)
+![alt AnnotationTransactionAttributeSource](assets/c3460e7c7e619c4bf9e3907c0a9114f3_1116X1026.png)
 
 	TransactionInterceptor类图
-![alt TransactionInterceptor](https://asset-i7.yit.com/URDM/c3bbdcec2ffd13bff92931f74d343384_2290X1844.png)
+![alt TransactionInterceptor](assets/c3bbdcec2ffd13bff92931f74d343384_2290X1844.png)
 
 	BeanFactoryTransactionAttributeSourceAdvisor类图
-![alt BeanFactoryTransactionAttributeSourceAdvisor](https://asset-i7.yit.com/URDM/f8035e6f26f699e1a09af8de72caf08d_1316X1606.png)
+![alt BeanFactoryTransactionAttributeSourceAdvisor](assets/f8035e6f26f699e1a09af8de72caf08d_1316X1606.png)
 
 
 
@@ -121,7 +124,7 @@ configurer-->parser:
 	事务注册的自动代理类是InfrastructureAdvisorAutoProxyCreator
 	AOP注册的自动代理类是AnnotationAwareAspectJAutoProxyCreator
 
-![alt autoProxyCreator](https://asset-i7.yit.com/URDM/b997a4cd46d9015fc18bdd70bb1fd384_2408X1086.png)
+![alt autoProxyCreator](assets/b997a4cd46d9015fc18bdd70bb1fd384_2408X1086.png)
 
 ```java
 public class BeanFactoryTransactionAttributeSourceAdvisor extends AbstractBeanFactoryPointcutAdvisor {
@@ -287,7 +290,7 @@ protected TransactionAttribute computeTransactionAttribute(Method method, @Nulla
 
 ### Spring事务传播机制
 
-![alt 事务传播机制](https://asset-stage.yit.com/URDM/be0dcbd60e9c67ef1047f0614dff8770_673X909.jpeg)
+ ![alt 事务传播机制](assets/be0dcbd60e9c67ef1047f0614dff8770_673X909.png)
 
 ```sequence
 title: 事务拦截
@@ -387,11 +390,16 @@ protected Object invokeWithinTransaction(Method method, @Nullable Class<?> targe
 
 AOP会注册一个①AnnotationAwareAspectJAutoProxyCreator实现了BeanPostProcessor，tx会注册②InfrastructureAdvisorAutoProxyCreator实现了BeanPostProcessor，这两个BeanPostProcessor会在Bean实例化时依次生成proxy，那么会不会导致生成了proxy的proxy?
 
-答：不会，①和②都是AutoProxyCreator，AutoProxyCreator全局只会出现一个。
+答：不会，①和②都是AutoProxyCreator，AutoProxyCreator全局只会出现一个。当注册时org.springframework.aop.config.AopConfigUtils#registerOrEscalateApcAsRequired有个逻辑来判断repositiry中已注册的优先级，再决定是否覆盖
 
-​		①的优先级比②高，当先注册①再注册②，会忽略②，当先注册②再注册①，会用①替换②。
+​		①的优先级比②高
+
+​			如果先注册了①再注册②，会忽略②。
+
+​			如果先注册了②再注册①，会用①替换repositiry中的②。
 
 
 
+## 参考文档
 [死磕Spring之AOP篇 - Spring事务详解](https://www.cnblogs.com/lifullmoon/p/14755976.html)
 [@Transaction源码深度解析](https://mp.weixin.qq.com/s?__biz=MzA5MTkxMDQ4MQ==&mid=2648937715&idx=2&sn=2d8534f9788bfa4678554d858ec93ab3&chksm=88620ccdbf1585db4d407fb0270b334812785a7614a2e4d365a9fdeb1661dc737913618c73fc&scene=178&cur_album_id=1318969124223238148#rd)
