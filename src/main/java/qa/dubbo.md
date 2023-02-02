@@ -4,11 +4,11 @@
 
 是一款高性能、轻量级的开源Java RPC框架，它提供了三大核心能力：面向接口的远程方法调用，智能容错和负载均衡，以及服务自动注册和发现。
 
-![](https://yit-integration.oss-cn-hangzhou.aliyuncs.com/CRM/TECH/dubbo%E5%8D%8F%E8%AE%AE.jpg)
+![](assets/dubbo协议.png)
 
 ## 2. Dubbo中的核心角色有哪些？
 
-![img](https://img0.baidu.com/it/u=433549453,16859787&fm=253&fmt=auto&app=138&f=JPG?w=973&h=500)
+![img](assets/6859787.png)
 
 
 
@@ -24,16 +24,14 @@
 
 - - 服务提供 `Invoker`
   - 服务消费 `Invoker`
-
-
-
 - 我们需要调用一个远程方法，我们需要动态代理来屏蔽远程调用的细节吧！我们屏蔽掉的这些细节就依赖对应的 `Invoker` 实现， `Invoker` 实现了真正的远程服务调用
+- 这里顺便解释下Exporter和Invoker的区别，Exporter持有Invoker的实例，Exporter是暴露对象，是起到暴露和撤回暴露作用的
 
 
 
 ## 4. Dobbo的分层架构(工作原理)
 
-![img](https://pic4.zhimg.com/80/v2-cea5061c7b8b2a584cc1889cf1581fdb_1440w.webp)
+![img](assets/cea5061c7b8b2a584cc1889cf1581fdb_1440w.png)
 
 
 
@@ -60,21 +58,18 @@
 
 - Java本身就提供了 SPI 机制的实现。不过，Dubbo 没有直接用，而是对 Java 原生的 SPI 机制进行了增强，以便更好满足自己的需求。
 
-  
-
 - 因为 Java SPI 在查找扩展实现类的时候遍历 SPI 的配置文件并且将实现类全部实例化，假设一个实现类初始化过程比较消耗资源且耗时，但是你的代码里面又用不上它，这就产生了资源的浪费。
 
 - 因此 Dubbo 就自己实现了一个 SPI，给每个实现类配了个名字，通过名字去文件里面找到对应的实现类全限定名然后加载实例化，**按需加载**。
 
-  ```
+  ```properties
   Java SPI文件示例：
   com.mysql.jdbc.Driver
   com.mysql.fabric.jdbc.FabricMySQLDriver
   ```
 
-  ```
+  ```properties
   Dubbo SPI文件示例：
-  
   adaptive=org.apache.dubbo.common.compiler.support.AdaptiveCompiler
   jdk=org.apache.dubbo.common.compiler.support.JdkCompiler
   javassist=org.apache.dubbo.common.compiler.support.JavassistCompiler
@@ -87,11 +82,12 @@
 - 比如说我们想要实现自己的负载均衡策略，我们创建对应的实现类 `XxxLoadBalance` 实现 `LoadBalance` 接口或者 `AbstractLoadBalance` 类。
 - 我们将这个是实现类的路径写入到`resources` 目录下的 `META-INF/dubbo/org.apache.dubbo.rpc.cluster.LoadBalance`文件中即可。
 
-```text
+```java
 public class XxxLoadBalance implements LoadBalance {
- public <T> Invoker<T> select(List<Invoker<T>> invokers, Invocation invocation) throws RpcException {
-  // ...
- }
+ 		public <T> Invoker<T> select(List<Invoker<T>> invokers, Invocation invocation) 
+   			throws RpcException {
+  			// ...
+ 		}
 }
 ```
 
@@ -103,15 +99,11 @@ public class XxxLoadBalance implements LoadBalance {
 
   随着dubbo版本升级，在服务启动时，服务暴露时机会有所不同，总体都是在IOC容器启动后，会进行暴露工作。
 
-  
-
 - 生成代理类：会通过 `proxyFactory.getInvoker`，利用 javassist 来进行动态代理，封装真的实现类。
 
-- 根据协议生成暴露对象(exporter)：通过 URL(类似：“dubbo://service-host/com.foo.FooService?version=1.0.0”) 参数选择对应的协议来进行 protocol.export，默认是 Dubbo 协议。
+- 根据协议生成**暴露对象**(exporter)：通过 URL(类似：“dubbo://service-host/com.foo.FooService?version=1.0.0”) 参数选择对应的协议来进行 protocol.export，默认是 Dubbo 协议。
 
-- - 自适应：代理类会根据 Invoker 里面的 URL 参数得知具体的协议，然后通过 Dubbo SPI 机制选择对应的实现类进行 export。
-
-
+  - 自适应：代理类会根据 Invoker 里面的 URL 参数得知具体的协议，然后通过 Dubbo SPI 机制选择对应的实现类进行 export。
 
 - 注册到ZK：将 export 得到的 exporter 存入一个 Map 中，供之后的远程调用查找，然后会向注册中心注册提供者的信息。
 
@@ -119,43 +111,32 @@ public class XxxLoadBalance implements LoadBalance {
 
 再重新传给 `Protocol` 扩展点进行暴露： `dubbo://service-host/com.foo.FooService?version=1.0.0`，然后基于扩展点自适应机制，通过提供者 URL 的 `dubbo://` 协议头识别，就会调用 `DubboProtocol` 的 `export()` 方法，打开服务端口。
 
-![img](https://pic4.zhimg.com/80/v2-c98f0fa0ccffe02a5942e634da97ce47_1440w.webp)
+![img](assets/v2-c98f0fa0ccffe02a5942e634da97ce47_1440w.png)
 
 ## 8. 服务引用
 
-获取远程调用的类，生成代理类。可以看作服务引用的逆过程。
+获取远程调用的类，生成代理类。可以看作服务暴露的逆过程。
 
 - 组装URL：会根据配置参数组装成 URL， 然后根据 URL 的参数来进行代理类的生成。(2种时机)
 
-- - 饿汉式：饿汉式是通过实现 Spring 的`InitializingBean`接口中的 `afterPropertiesSet`方法，容器通过调用 `ReferenceBean`的 `afterPropertiesSet`方法时引入服务。(在Spring启动时，给所有的属性注入实现类，包含远程和本地的实现类)。要开启dubbo:reference标签
-
-    
-
-  - 懒汉式：只有当这个服务被注入到其他类中时启动引入流程，也就是说用到了才会开始服务引入。
-
-    
+    - 饿汉式：饿汉式是通过实现 Spring 的`InitializingBean`接口中的 `afterPropertiesSet`方法，容器通过调用 `ReferenceBean`的 `afterPropertiesSet`方法时引入服务。(在Spring启动时，给所有的属性注入实现类，包含远程和本地的实现类)。要开启dubbo:reference标签
+    - 懒汉式：只有当这个服务**被注入到其他类中**时启动引入流程，也就是说用到了才会开始服务引入。
 
 - 从ZK中获取需要的服务提供者的信息：得到Map。
 
-    
-
 - 根据协议解析传过来的exporter：
 
-    - - 协议的不同，获取的路径也不同：本地，直接，从ZK。
-    
-        
-    
+    - 协议的不同，获取的路径也不同：本地，直接，从ZK。
+
 - 生成代理类：供消费者使用Netty进行远程调用。invoker。
 
-    ![img](https://pic1.zhimg.com/80/v2-e02eb5344453a425a0dc62840056557c_1440w.webp)
-    
+    ![img](assets/v2-e02eb5344453a425a0dc62840056557c_1440w.png)
+
 ## 9. 服务调用
 
 1. 服务调用是在生成代理对象后，使用Netty，生成Netty Client进行远程调用。Netty Server通过执行返回调用结果。
 2. 在调用之前，就会进行智能容错和负载均衡。
 3. 首先客户端调用接口的某个方法，实际调用的是代理类，代理类会通过 cluster 从 directory(invoker的集合) 中获取一堆 invokers(如果有一堆的话)，然后进行 router 的过滤（其中看配置也会添加 mockInvoker 用于服务降级），然后再通过 SPI 得到 loadBalance 进行一波负载均衡。
-
-
 
 
 
@@ -170,52 +151,49 @@ public class XxxLoadBalance implements LoadBalance {
 ## 11. dubbo常见的容错机制
 
 - Failover Cluster(默认)
-
-- - 失败自动切换，当出现失败，重试其它服务器。
+  - 失败自动切换，当出现失败，重试其它服务器。
   - 通常用于读操作，但重试会带来更长延迟。
 
 
-
 - Failfast Cluster
-
-- - 快速失败，只发起一次调用，失败立即报错。
+  - 快速失败，只发起一次调用，失败立即报错。
   - 通常用于非幂等性的写操作，比如新增记录。
 
 
-
 - Failsafe Cluster
-
-- - 失败安全，出现异常时，直接忽略。
+  - 失败安全，出现异常时，直接忽略。
   - 通常用于写入审计日志等操作。
 
 
-
 - Failback Cluster
-
-- - 失败自动恢复，后台记录失败请求，定时重发。
+  - 失败自动恢复，后台记录失败请求，定时重发。
   - 通常用于消息通知操作。
-
 
 
 - Forking Cluster
 
-- - 并行调用多个服务器，只要一个成功即返回。
+  - 并行调用多个服务器，只要一个成功即返回。
 
   - 通常用于实时性要求较高的读操作，但需要浪费更多服务资源。
 
     
 
-## 12. Dubbo 为什么默认用 Javassist？
 
+## 12. Dubbo 为什么默认用 Javassist？
+```
+注意，这里说的是默认使用，dubbo也有jdk动态代理的实现
+```
 - 很简单，就是快，且字节码生成方便。
 
 - 其他常见的动态代理： JDK 的动态代理、ASM、cglib。
+  - ASM 比 Javassist 更快，但是没有快一个数量级，而Javassist 只需用字符串拼接就可以生成字节码，而 ASM 需要手工生成，成本较高，比较麻烦。
+  
+    
+    
+    
 
-- - ASM 比 Javassist 更快，但是没有快一个数量级，而Javassist 只需用字符串拼接就可以生成字节码，而 ASM 需要手工生成，成本较高，比较麻烦。
 
-
-
-## 13. Dubbo 支持多种序列化方式?
+## 13. Dubbo 支持哪些序列化方式?
 
 - JDK 自带的序列化：不支持跨语言调用 ；性能差
 - JSON：性能差
@@ -261,25 +239,29 @@ Dubbo中服务降级如何实现的呢？主要四种方式：
 
 　　1、在dubbo管理控制台配置服务降级(屏蔽和容错)
 
-　　　　![img](https://img2022.cnblogs.com/blog/2310865/202202/2310865-20220217102427280-1271159312.png)
+　　　　![img](assets/2310865-20220217102427280-1271159312.png)
 
-　　　　![img](https://img2022.cnblogs.com/blog/2310865/202202/2310865-20220217103411677-2080182401.png)
+　　　　![img](assets/2310865-20220217103411677-2080182401.png)
 
 　　2、指定返回简单值或者null
 
-　　　　![img](https://img2022.cnblogs.com/blog/2310865/202202/2310865-20220217102908720-927962711.png)
+　　　　![img](assets/2310865-20220217102908720-927962711.png)
 
  　　　如果是注解则使用@Reference(mock="return null") @Reference(mock="return 简单值")，也支持@Reference(mock="force:return null")。
 
 　　3、使用java代码 动态写入配置中心
 
-　　　　![img](https://img2022.cnblogs.com/blog/2310865/202202/2310865-20220217103316161-2017952371.png)
+　　　　![img](assets/2310865-20220217103316161-2017952371.png)
 
 　　4、整合hystrix，后续介绍hystrix进行详细介绍。
+
+
 
 ### 18. Dubbo 的注册中心集群挂掉，发布者和订阅者之间还能通信么？
 
 可以通讯。启动 Dubbo 时，消费者会从 Zookeeper 拉取注册的生产者的地址接口等数据，缓存在本地。每次调用时，按照本地存储的地址进行调用。
+
+
 
 ### 19. Dubbo 和 Spring Cloud 的关系？
 
@@ -301,10 +283,9 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 
 1、MonitorFilter 向DubboMonitor 发送数据
 
-2、DubboMonitor 将数据进行聚合后（默认聚合1min 中的统计数据）暂存到ConcurrentMap<Statistics, AtomicReference> statisticsMap，然后使用一个含有3 个线程（线程名字：DubboMonitorSendTimer）的线程池每隔1min 钟，调用SimpleMonitorService 遍历发送statisticsMap 中的统计数据，每发送完毕一个，就重置当前的Statistics 的AtomicReference
+2、DubboMonitor 将数据进行聚合后（默认聚合1min 中的统计数据）暂存到ConcurrentMap<Statistics, AtomicReference> statisticsMap，然后使用一个含有3 个线程（线程名字：DubboMonitorSendTimer）的线程池每隔1分钟，调用SimpleMonitorService 遍历发送statisticsMap 中的统计数据，每发送完毕一个，就重置当前的Statistics 的AtomicReference
 
-3、SimpleMonitorService 将这些聚合数据塞入BlockingQueue queue 中（ 队
-列大写为100000）
+3、SimpleMonitorService 将这些聚合数据塞入BlockingQueue queue 中（ 队列大小为100000）
 
 4、SimpleMonitorService 使用一个后台线程（线程名为：DubboMonitorAsyncWriteLogThread）将queue 中的数据写入文件（该线程以死循环的形式来写）
 
@@ -312,11 +293,7 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 
 
 
-
-
 ## 22. Dubbo 集群的负载均衡有哪些策略
-
-
 
 - RandomLoadBalance：随机。随机的选择一个。是Dubbo的**默认**负载均衡策略。(加权/不加权)
 - RoundRobinLoadBalance：轮询。轮询选择一个。(加权/不加权)
@@ -329,9 +306,9 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 
 1、低版本的 dubbo 优雅停机有很多问题，建议升级 dubbo 版本到相对稳定的版本（2.6.3进一步优化了dubbo优雅停机和 2.6.5 修复了leastactive loadbalance的预热问题） dubbo 2.5.x 升级到 2.7.15
 
-2、Dubbo 是通过 JDK 的 ShutdownHook 来完成优雅停机的（高版本优化了，放到了 spring ContextClosedEvent 事件里面）.所以如果用户使用 kill -9 PID 等强制关闭指令，是不会执行优雅停机的，只有通过 kill PID 时，才会执行.
+2、Dubbo 是通过 JDK 的 ShutdownHook 来完成优雅停机的（高版本优化了，放到了 spring ContextClosedEvent 事件里面）。所以如果用户使用 kill -9 PID 等强制关闭指令，是不会执行优雅停机的，只有通过 kill PID 时，才会执行.
 
-**真实项目中依赖关系比较复杂，开发要保证先停掉所有 dubbo 消费的地方（比如 消费 kafka 消息然后调用 dubbo 服务, 定时任务调用 dubbo 服务等），然后再触发 dubbo 的优雅停机**
+**真实项目中依赖关系比较复杂，开发要保证先停掉所有 dubbo 消费的地方（比如消费 kafka 消息然后调用 dubbo 服务, 定时任务调用 dubbo 服务等），然后再触发 dubbo 的优雅停机**
 
 4、JDK 的 ShutdownHook 的执行顺序是并发加无序执行的，建议统一放到 spring ContextClosedEvent 里面，由自己编排需要停机的任务顺序 
 
@@ -364,9 +341,7 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 </tbody>
 </table>
 
-
-
-### 什么是ShutdownHook？
+#### 什么是ShutdownHook？
 
 在Java程序中可以通过添加关闭钩子，实现在程序退出时关闭资源、平滑退出的功能。 
 使用Runtime.addShutdownHook(Thread hook)方法，可以注册一个JVM关闭的钩子，这个钩子可以在以下几种场景被调用： 
@@ -381,61 +356,68 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 
 ## 24. dubbo客户端和服务端线程模型是怎样的？
 
- ![img](https://img-blog.csdnimg.cn/04f095c61c6241e19bf47f758e3526f3.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAamVycnlfZHl5,size_20,color_FFFFFF,t_70,g_se,x_16)
+ ![img](assets/Q1NETiBAamVycnlfZHl5.png)
 
 Dubbo 提供了五种线程派发策略，默认策略是 all，即所有消息都会被派发到业务线程池执行。
 
-![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimg-blog.csdnimg.cn%2Fd76389eba8624ed88739082517f1eb39.png&refer=http%3A%2F%2Fimg-blog.csdnimg.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1668844589&t=529113aaede25ac8a7d7b90f94064b87
+ ![img](assets/76389eba8624ed88739082517f1e.png)
 
 all ：所有消息都派发到Server线程池，包括请求，响应，连接事件，断开事件，心跳等。
-direct： 所有消息都不派发到Server线程池，全部在 worker IO 线程上直接执行。
+direct： 所有消息都不派发到Server线程池，全部在 IO 线程上直接执行。
 message ：只有请求响应消息派发到Server线程池，其它连接断开事件，心跳等消息，直接在 IO 线程上执行。
 execution： 只有请求消息派发到Server线程池，不含响应，响应和其它连接断开事件，心跳等消息，直接在 IO 线程上执行。
 connection： 在 IO 线程上，将连接断开事件放入队列，有序逐个执行，其它消息派发到线程池。
 
+
+
 ## 25. provider 有哪些属性
 
-* interface
-* ref
-* registry
-* protocol
-* version 版本号
-* timeout 调用超时时间
-* retries 超时重试次数
+* interface：接口
+* ref：实现类
+* registry：注册中心
+* protocol：协议
+* version：版本号
+* timeout：调用超时时间
+* retries：超时重试次数
 
-```
-    <bean id="dubboRegistryConfig" class="org.apache.dubbo.config.RegistryConfig">
-        <property name="address" value="${dubbo.registry.url}"/>
-    </bean>
+```xml
+<bean id="dubboRegistryConfig" class="org.apache.dubbo.config.RegistryConfig">
+    <property name="address" value="${dubbo.registry.url}"/>
+</bean>
 
-    <bean id="dubboProtocolConfig" class="org.apache.dubbo.config.ProtocolConfig">
-        <property name="port" value="-1"/>
-        <property name="parameters">
-            <map>
-                <entry key="accessLogLevel" value="${dubbo.access_log_level}"/>
-            </map>
-        </property>
-    </bean>
-    
-    <bean id="signUpNotificationService" class="org.apache.dubbo.config.spring.ServiceBean">
-        <property name="interface" value="com.xxx.task.signin.api.SignUpNotificationService"/>
-        <property name="ref" ref="signUpNotificationServiceImpl"/>
-        <property name="registry" ref="dubboRegistryConfig"/>
-        <property name="protocol" ref="dubboProtocolConfig"/>
-        <property name="version" value="${dubbo.reference.version}"/>
-        <property name="timeout" value="${dubbo.export.timeout}"/>
-        <property name="retries" value="0"/>
-    </bean>
+<bean id="dubboProtocolConfig" class="org.apache.dubbo.config.ProtocolConfig">
+    <property name="port" value="-1"/>
+    <property name="parameters">
+        <map>
+            <entry key="accessLogLevel" value="${dubbo.access_log_level}"/>
+        </map>
+    </property>
+</bean>
+
+<bean id="signUpNotificationService" class="org.apache.dubbo.config.spring.ServiceBean">
+    <property name="interface" value="com.xxx.api.SignUpNotificationService"/>
+    <property name="ref" ref="signUpNotificationServiceImpl"/>
+    <property name="registry" ref="dubboRegistryConfig"/>
+    <property name="protocol" ref="dubboProtocolConfig"/>
+    <property name="version" value="${dubbo.reference.version}"/>
+    <property name="timeout" value="${dubbo.export.timeout}"/>
+    <property name="retries" value="0"/>
+</bean>
 ```
+
 
 
 ## 26. consumer 有哪些属性
 
+```
+与provider几乎相同
+```
+
+
+
 ## 27. dubbo是如何发起一个调用的
-[](https://juejin.cn/post/6875847496082391053#heading-16)
+
+[《Dubbo系列》-Dubbo的服务调用过程](https://juejin.cn/post/6875847496082391053#heading-16)
 
 
 
-
-
-参照资料：https://www.modb.pro/db/216579
