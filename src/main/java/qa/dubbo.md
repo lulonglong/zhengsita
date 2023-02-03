@@ -121,7 +121,10 @@ public class XxxLoadBalance implements LoadBalance {
 
     - 饿汉式：饿汉式是通过实现 Spring 的`InitializingBean`接口中的 `afterPropertiesSet`方法，容器通过调用 `ReferenceBean`的 `afterPropertiesSet`方法时引入服务。(在Spring启动时，给所有的属性注入实现类，包含远程和本地的实现类)。要开启dubbo:reference标签
     - 懒汉式：只有当这个服务**被注入到其他类中**时启动引入流程，也就是说用到了才会开始服务引入。
-
+```
+		如果对Spring创建Bean的过程不太了解，以上可能存在疑问。首先，ReferenceBean实现了FactoryBean接口，获取实例需要调用getObject方法。Spring容器本身也支持懒加载和非懒加载。如果在懒加载的情况下，dubbo的饿汉式和懒汉式没有区别。区别在Spring非懒加载的时候。
+当容器启动时，会创建非懒加载和单例bean，如果是FactoryBean，则默认仅仅会创建FactoryBean实例，而不调用getObject方法。getObject方法是在实际被引用时才调用创建。也就是说Spring本身对于FactoryBean包装的实例就是懒汉式。dubbo在配置饿汉式时做了额外逻辑，就是在FactoryBean初始化之后就通过afterPropertiesSet方法直接调用getObject创建被包装的实例。
+```
 - 从ZK中获取需要的服务提供者的信息：得到Map。
 
 - 根据协议解析传过来的exporter：

@@ -9,7 +9,6 @@
 3.实战：实战中的一些小技巧，一些踩过的坑经历。或者是举例一些应用场景。
 
 
-
 ## 问题
 
 ### 基础篇
@@ -84,8 +83,6 @@ Class TestInit{
 }
 ```
 
-
-
 顺序原则：
 
 1.先父类，再子类
@@ -98,11 +95,7 @@ Class TestInit{
 
 
 
-
-
 #### 3.下面两个代码块能正常编译和执行吗？
-
-
 
 ```java
 // 代码块1
@@ -174,8 +167,6 @@ https://joonwhee.blog.csdn.net/article/details/106324537
 
 #### 7. String s = new String("xyz") 创建了几个字符串对象？
 
-
-
 1.如果jvm字符串常量池里已有xyz，则创建1个对象
 
 2.如果“xyz”不存在常量池，则创建两个，一个在常量池，一个是s指向的对象（char数组）
@@ -194,8 +185,6 @@ https://joonwhee.blog.csdn.net/article/details/106324537
 
 1. 强引用：强引用是最传统的“引用”的定义，是指在程序代码之中普遍存在的引用赋值。
 
-   
-
 2. 软引用：软引用是用来描述一些还有用，但非必须的对象。只被软引用关联着的对象，在系统将要发生内 存溢出异常前，会把这些对象列进回收范围之中进行第二次回收，如果这次回收还没有足够的内存， 才会抛出内存溢出异常。
 
    //创建软引用对象        
@@ -206,15 +195,11 @@ https://joonwhee.blog.csdn.net/article/details/106324537
 
    应用场景：适合做本地缓存。既可以就近缓存数据，又弹性使用内存，在内存用尽时会自动回收这部分对象。小对象没必要使用，因为本身会额外创建出一个封住那个对象SoftReference。
 
-   
-
 3. 弱引用：也是用来描述那些非必须对象，但是它的强度比软引用更弱一些，被弱引用关联的对象只 能生存到下一次垃圾收集发生为止。当垃圾收集器开始工作，无论当前内存是否足够，都会回收掉只 被弱引用关联的对象。在JDK 1.2版之后提供了WeakReference类来实现弱引用。
 
    应用场景：可在辅助类中使用，实体业务对象种强引用，辅助类中弱引用，在业务对象超出作用域强引用释放后，弱引用即使释放。
 
-   ​					业务对象未终结前，又可以使用辅助功能，比如：threadlocal本地变量的实现
-
-   
+   业务对象未终结前，又可以使用辅助功能，比如：threadlocal本地变量的实现
 
 4. 虚引用：最弱的一种引用。与软、弱引用不同，虚引用指向的对象十分脆弱，无法通过 get 方法得到其指向的对象。它的唯一作用就是当其指向的对象被回收之后，自己被加入到引用队列，用作记录该引用指向的对象已被销毁。
 
@@ -268,9 +253,7 @@ NIO：同步非阻塞，服务实现模式是一个线程可以处理多个连�
 
 AIO：异步非阻塞，服务器实现模式为一个有效请求一个线程，客户端的I/O请求都是由OS先完成了再通知服务器应用去启动线程进行处理
 
-​			总结：形势上的完全非阻塞
-
-
+总结：形势上的完全非阻塞
 
 应用场景：
 
@@ -280,13 +263,18 @@ NIO：适用连接数目多且连接比较短的架构，如：聊天服务器�
 
 AIO：适用连接数目多且连接长的架构，如相册服务器 
 
+
+
 #### 13、DCL单例模式中，为什么要加volatile
 
 DCL：double check lock双重检查锁
 
 https://juejin.cn/post/7102222154518757383
 
+
+
 #### 14、类锁和对象的区别
+
 [请说一下类锁和和对象锁的区别](https://www.cnblogs.com/fengzheng/p/12066239.html)
 
 类锁：
@@ -301,9 +289,14 @@ https://juejin.cn/post/7102222154518757383
 对象锁：
 修饰一个对象，同一类型不同对象之间，是不同的锁
 * 修饰一个非静态成员变量
+
 * 修饰一个非静态方法
+
 * 修饰一个非静态代码块
+
 * synchronized(this)
+
+  
 
 #### 15、24大设计模式和7个原则
 ![24大设计模式和7个原则](https://pdai.tech/md/dev-spec/pattern/1_overview.html)
@@ -311,7 +304,10 @@ https://juejin.cn/post/7102222154518757383
 #### ConcurrentHashMap 分段锁
 [简单谈谈ConcurrentHashMap](https://juejin.cn/post/7031106182446055432)
 
+
+
 #### 16、说说数组和链表的区别
+
 关键点
 内存分配
 查找方式
@@ -324,8 +320,13 @@ https://juejin.cn/post/6935049364616249381
 #### 17. 说说Serializable原理
 [解析Serializable原理](https://juejin.cn/post/6844904049997774856#heading-6)
 
+
+
 #### 18. 枚举类的用法
+
 [关于枚举类你可能不知道的事](https://www.cnblogs.com/54chensongxia/p/11581555.html)
+
+
 
 ### 线程篇
 
@@ -413,17 +414,17 @@ DiscardOldestPolicy：抛弃最老策略。抛弃阻塞队列中最老的任务�
 CallerRunsPolicy：调用者运行策略。在调用者线程中执行该任务。该策略实现了一种调节机制，该策略既不会抛弃任务，也不会抛出异常，而是将任务回退到调用者（调用线程池执行任务的主线程），由于执行任务需要一定时间，因此主线程至少在一段时间内不能提交任务，从而使得线程池有时间来处理完正在执行的任务。 
 
 
-
 #### 10.为何stop()和suspend()方法不推荐使用
-
 不安全，意外被其他线程终止或暂停，如果程序持有锁资源，容易死锁。
 
 #### 11. execute 和 submit 的区别
+
 * 接收的参数不一样：submit可以是Callable，也可以是Runnable，execute只能是Runnable 。
 * submit有返回值；而execute没有，fs.get()的结果是null
 * submit在执行过程中与execute不一样，不会抛出异常而是把异常保存在成员变量中，在FutureTask.get阻塞获取的时候再把异常抛出来。
 * Spring的@Schedule注解的内部实现就是使用submit，因此，如果你构建的任务内部有未检查异常，你是永远也拿不到这个异常的。
 * execute直接抛出异常之后线程就死掉了，submit保存异常线程没有死掉，因此execute的线程池可能会出现没有意义的情况，因为线程没有得到重用。而submit不会出现这种情况。
+
 
 ### 并发编程篇
 
@@ -433,19 +434,13 @@ CallerRunsPolicy：调用者运行策略。在调用者线程中执行该任务�
 
 活锁：任务或者执行者没有被阻塞，由于某些条件没有满足，导致一直重复尝试，失败，尝试，失败
 
-
-
 活锁和死锁的区别：
 
 1）处于活锁的实体是在不断的改变状态，所谓的“活”； 处于死锁的实体表现为等待。
 
 2）活锁可能自行解开，死锁不能自行解开。
 
-
-
-**饥饿：一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执**
-
-行的状态。
+**饥饿：一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执**行的状态。
 
 **Java** **中导致饥饿的原因：**
 
@@ -459,8 +454,6 @@ CallerRunsPolicy：调用者运行策略。在调用者线程中执行该任务�
 
 法)，因为其他线程总是被持续地获得唤醒
 
-
-
 #### 2.谈谈threadlocal
 
 ThreadLocal意为线程本地变量，作用是对资源进行隔离，线程级隔离。
@@ -468,8 +461,6 @@ ThreadLocal意为线程本地变量，作用是对资源进行隔离，线程级
 每一个线程都有一个ThreadLocalMap类型的threadLocals属性用来存储本线程的所有“线程本地变量”。
 
 使用ThreadLocal 变量存储数据时会以ThreadLocal变量作为key，要存储的业务对象作为value，存储到线程的threadLocals的map里。
-
-
 
 ```java
 public class Test {
@@ -487,7 +478,6 @@ public class Test {
 		}
 }
 ```
-
 [ThreadLocal使用与原理](https://juejin.cn/post/6959333602748268575)
 
 #### 3.协程/纤程是什么？
@@ -495,8 +485,6 @@ public class Test {
 可以理解为轻量级线程，或用户线程(区别操作系统内核线程)
 
 是应用曾的一种抽象，抽象出更细颗粒度的计算单元，虚拟出一种轻量化线程模型，解决线程切换带来的问题。 
-
-
 
 #### 4.synchronized 和 Lock 的区别
 
@@ -539,8 +527,6 @@ Mark Word 在64位 JVM 中：
 
 4）打破环路等待条件：实现资源有序分配策略，将系统的所有资源统一编号，所有进程只能采用按序号递增的形式申请资源。 
 
-
-
 #### 7.介绍下 CountDownLatch 、 CyclicBarrier、Semaphore
 
 CountDownLatch： 线程计数器，A过程的计数达到，B过程前行
@@ -573,8 +559,6 @@ CountDownLatch： 线程计数器，A过程的计数达到，B过程前行
 ```
 
 CyclicBarrier：回环栅栏-等待至 barrier 状态再全部同时执行，“人数到齐一起走”
-
-
 
 ```java
 public class Demo {
@@ -640,11 +624,9 @@ static class Worker extends Thread {
     }
 ```
 
-
-
 #### 8.ConcurrentHashMap的get方法是否要加锁，为什么？
 
-不需要，get方法采用了unsafe方法，该来保证线程安全。
+不需要，get方法采用了unsafe方法，用来保证线程安全。
 
 使用了volatile关键字，保证了内存的可见性
 多线程的环境下修改了节点的value和新增了节点对于其他线程是可见的
@@ -674,8 +656,6 @@ Volatile的存在是解决可见性问题的，当多个线程同时访问或操
 
 TODO：展开到内存栅栏更深处
 
-
-
 #### 10.你了解读写锁吗?
 
 读写锁内部有读锁写锁两把锁
@@ -698,14 +678,11 @@ TODO：展开到内存栅栏更深处
 
 #### 1.谈谈对象的内存布局
 
-
-
 ![img](https://img-blog.csdnimg.cn/img_convert/c8a8cbd8005e2f08cc640b9b35fd64ae.png)
 
 ![img](https://img-blog.csdnimg.cn/img_convert/a146f04f1c52599a60594005b09b5fe9.png)
 
 ![img](https://img-blog.csdnimg.cn/img_convert/f39e65d1f33ddb8593218e5e3ee95b5e.png)
-
 
 
 对象实例数据会考虑内存对齐，会对对象进行字段重排（类型指针指向的类对象上已体现），原则把短字段对齐到32或64位，
@@ -717,7 +694,6 @@ TODO：展开到内存栅栏更深处
 一个缓存行的长度是64个字节。
 
 todo 指针压缩
-
 
 
 #### 2.你知道的垃圾回收器有哪些？
@@ -765,9 +741,6 @@ O表示老生代（Old），E表示Eden，S表示Survivor
 ![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fwww.likecs.com%2Fdefault%2Findex%2Fimg%3Fu%3DaHR0cHM6Ly9pbWcyMDIwLmNuYmxvZ3MuY29tL2Jsb2cvMTMzNDAyMy8yMDIwMDcvMTMzNDAyMy0yMDIwMDcxMjA4NDAxOTgwMi0xMjQzNDE0ODQ3LnBuZw%3D%3D&refer=http%3A%2F%2Fwww.likecs.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1667241315&t=ed7e4f40fd257c30b74202b3cbc1c0cd)
 
 
-
-
-
 ##### ZGC
 
 - JDK11 中开始推出，追求超低时延，源自 Azul System 的 C4
@@ -785,7 +758,6 @@ O表示老生代（Old），E表示Eden，S表示Survivor
 ![img](https://pic2.zhimg.com/80/v2-7f4b6bea067572cd7182735aa8a943c5_720w.webp)
 
 ![img](https://pic1.zhimg.com/80/v2-754c7da742d2d936654b2a607dc840f8_720w.webp)
-
 
 
 #### 3.GC Root有哪些?
@@ -811,7 +783,6 @@ O表示老生代（Old），E表示Eden，S表示Survivor
 缺点：容易产生内存碎片
 
 
-
 ##### 2. Copying（复制）算法
 
 ![img](https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pbWFnZXMwLmNuYmxvZ3MuY29tL2kvMjg4Nzk5LzIwMTQwNi8xODEwNDE1Mjg0ODg3MjguanBn)
@@ -829,13 +800,11 @@ O表示老生代（Old），E表示Eden，S表示Survivor
 缺点，空间代价高。
 
 
-
 ##### 3. Mark-Compact（标记-整理）算法
 
 ![img](https://imgconvert.csdnimg.cn/aHR0cHM6Ly9pbWFnZXMwLmNuYmxvZ3MuY29tL2kvMjg4Nzk5LzIwMTQwNi8xODExMDAxMjk1NzU5MTYuanBn)
 
 其中的标记过程仍然与“标记-清除”算法一样，但后续步骤不是直接对可 回收对象进行清理，而是让所有存活的对象都向内存空间一端移动，然后直接清理掉边界以外的内存。
-
 
 
 ##### 4. Generational Collection（分代收集）算法
@@ -867,8 +836,7 @@ Tenured采用标记-整理
 ​    相反，如果没有使用双亲委派模型，由各个类加载器自行去加载的话，如果用户自己编写了一个称为java.lang.Object类，并放在程序的ClassPath中，那系统中将会出现多个不同的Object类，Java类型体系中最基础的行为也就无法保证，应用程序也将会变得一片混乱。
 
 
-
-双亲委派机制优势：
+**双亲委派机制优势：**
 
 **避免类的重复加载**
 
@@ -878,18 +846,12 @@ Tenured采用标记-整理
 
 防止核心API被随意篡改。通过委托方式，不会去篡改核心.class，即使篡改也不会去加载，即使加载也不会是同一个.class对象了。不同的加载器加载同一个.class也不是同一个Class对象。这样保证了Class执行安全。 
 
-
-
 双亲委派模型并不是一个具有强制性约束的模型，而是Java设计者推荐给开发者们的类加载器实现方式。在Java的世界中大部分的类加载器都遵循这个模型，但也有例外的情况，比如OSGi为实现模块化热部署破坏了这个模型。
 
- 
 
 #### 7.介绍一下Java 内存结构（运行时数据区)。
 
 ![img](https://pics3.baidu.com/feed/48540923dd54564e6401f2a939d79c8bd0584fc8.png@f_auto?token=0aff26b9778e49619f85474c29b63b1c)
-
-
-
 
 
 #### 8.你知道“内存对齐”吗？（内存对齐，对齐填充）
@@ -907,13 +869,9 @@ java有个@Contended 注解显示指定某个字段或某个类的所有字段�
 2. 解决伪共享问题
 
    
-
 #### 9.jvm运行时区内容
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/2f13414f069c461986cb2e3b5e06f91a.png?x-oss-process=image/watermark,type_d3F5LXplbmhlaQ,shadow_50,text_Q1NETiBAbmV3IGhpbGJlcnQoKQ==,size_20,color_FFFFFF,t_70,g_se,x_16#pic_center)
-
-
-
 
 
 #### 10.你对染色指针了解多少？
@@ -929,7 +887,6 @@ java有个@Contended 注解显示指定某个字段或某个类的所有字段�
 ​				   https://tech.meituan.com/2020/08/06/new-zgc-practice-in-meituan.html
 
 
-
 #### 11. 垃圾回收的时机
 
 ##### Minor GC：
@@ -943,7 +900,6 @@ java有个@Contended 注解显示指定某个字段或某个类的所有字段�
 分代管理：HotSpot虚拟机中多数收集器都采用了分代收集来管理堆内存，那内存回收时就必须能决策哪些存 活对象应当放在新生代，哪些存活对象放在老年代中。为做到这点，虚拟机给每个对象定义了一个对 象年龄(Age)计数器，存储在对象头中(详见第2章)。对象通常在Eden区里诞生，如果经过第一次 Minor GC后仍然存活，并且能被Survivor容纳的话，该对象会被移动到Survivor空间中，并且将其对象 年龄设为1岁。对象在Survivor区中每熬过一次Minor GC，年龄就增加1岁，当它的年龄增加到一定程 度(默认为15)，就会被晋升到老年代中。对象晋升老年代的年龄阈值，可以通过参数-XXM axTenuringThreshold设置。
 
 
-
 注意：在jvm发展当中，发展出了各种垃圾回收器，叫法各有不同。因为ZGC已经没有分代，都是采用标记复制算法的区域收集。
 
 - Young GC/Minor GC：只收集young gen的GC
@@ -955,7 +911,6 @@ java有个@Contended 注解显示指定某个字段或某个类的所有字段�
 - **Full GC：**收集整个堆，包括young gen、old gen、perm gen（如果存在的话），较为通用的叫法
 
   
-
 ##### ZGC：
 
  ZDirector和ZStat都是通过时钟触发器来控制是否执行业务。  
@@ -979,7 +934,6 @@ java有个@Contended 注解显示指定某个字段或某个类的所有字段�
 3）设计规则：如当TIMEoom小于TIMEgc（垃圾回收的时间），则可以启动垃圾回收。这个规则的含义是如果从现在起到OOM发生前开始执行垃圾回收，刚好在OOM发生前完成垃圾回收的动作，从而避免OOM。在ZGC中ZDirector是周期运行的，所以在计算时还应该把OOM的时间减去采样周期的时间，采样周期记为TIMEinterval，则规则为TIMEoom<TIMEgc+TIMEinterval时触发垃圾回收。 
 
 
-
 ###### 主动触发
 
 ZDirector提供的第四个规则是主动触发规则，该规则是为了应用程序在吞吐量下降的情况下，当满足一定条件时，还可以执行垃圾回收。这里满足一定条件指的是：
@@ -987,14 +941,11 @@ ZDirector提供的第四个规则是主动触发规则，该规则是为了应�
 2）从上一次垃圾回收完成到当前时间已经过去了5min，记为TIMEelapsed。
 如果这两个条件同时满足，预测垃圾回收时间为TIMEgc，定义规则：如果NUMgc * TIMEgc < TIMEelapsed，则触发垃圾回收。其中NUMgc是ZGC设计的常量，假设应用程序的吞吐率从50%下降到1%，需要触发一次垃圾回收。 
 
-
-
 注意：ZDirector虽然实现为并发线程，但在ZGC中只有一个，所以ZDirector不会涉及并发的问题。
 
   
 
 ## 答案展开
-
 
 
 ### 线程篇
@@ -1020,7 +971,6 @@ ZDirector提供的第四个规则是主动触发规则，该规则是为了应�
 2. 避免有锁编程，遇到资源竞争情况，尽量使用CAS方式解决。
 
 
-
 高级加分点：引入协程/纤程的技术和理论。
 
 ​		由于互联网系统都是采用分布式模式，大量的微服务化，造成了调用链明显变长，一个请求执行链路中所有上下文切换的成本大幅增加。同时单微服务接口的计算量明显变小，上下文切换所带来的成本和计算的比率明显增高，甚至有些计算，切换上下文的成本比计算本身的成本都高。所以Java开始寻求无上下文切换的虚拟线程，来解决这种问题。这种虚拟线程有个名字叫纤程，又叫有栈协程。
@@ -1030,18 +980,11 @@ ZDirector提供的第四个规则是主动触发规则，该规则是为了应�
  **今年9月份发布的JDK19 里已经把虚拟线程列为JEP（JDK增强建议）**
 
 
-
 #### 为何stop()和suspend()方法不推荐使用
 
 stop()方法作为一种粗暴的线程终止行为，在线程终止之前没有对其做任何的清除操作，因此具有固有的不安全性。 用Thread.stop()方法来终止线程将会释放该线程对象已经锁定的所有监视器。如果以前受这些监视器保护的任何对象都处于不连贯状态，那么损坏的对象对其他线程可见，这有可能导致不安全的操作。 由于上述原因，因此不应该使用stop()方法，而应该在自己的Thread类中置入一个标志，用于控制目标线程是活动还是停止。如果该标志指示它要停止运行，可使其结束run（）方法。如果目标线程等待很长时间，则应使用interrupt()方法来中断该等待。
 
 suspend()方法 该方法已经遭到反对，因为它具有固有的死锁倾向。调用suspend（）方法的时候，目标线程会停下来。如果目标线程挂起时在保护关键系统资源的监视器上保持有锁，则在目标线程重新开始以前，其他线程都不能访问该资源。除非被挂起的线程恢复运行。对任何其他线程来说，如果想恢复目标线程，同时又试图使用任何一个锁定的资源，就会造成死锁。由于上述原因，因此不应该使用suspend（）方法，而应在自己的thread类中置入一个标志，用于控制线程是活动还是挂起。如果标志指出线程应该挂起，那么用wait（）方法命令其进入等待状态。如果标志指出线程应当恢复，那么用notify()方法重新启动线程。
-
-
-
-
-
-
 
 #### Threadlocal
 
@@ -1052,8 +995,6 @@ ThreadLocal意为线程本地变量，作用是对资源进行隔离，线程级
 每一个线程内部都有一个ThreadLocalMap类型的threadLocals属性，此属性负责具体线程本地变量的存储。
 
 延伸：ThreadLocalMap 内部是采用一个弱引用对象，来存储threadlocal对象，以达到在业务代码使用完之后，gc能够即时清理。
-
-
 
 ![ThreadLocal弱引用](https://picx.zhimg.com/v2-3923406319c1fe3c6656aeda7d7de121_1440w.jpg?source=172ae18b)
 
@@ -1087,9 +1028,7 @@ ThreadLocal意为线程本地变量，作用是对资源进行隔离，线程级
 关闭原因：1.从偏向锁的加锁和解锁的过程中可以看出，当只有一个线程反复进入同步代码块时，偏向锁带来的性能开销基本可以忽略，但是当有其他线程尝试获取锁的时候，就需要等到 safe point 时，再将偏向锁撤销为无锁的状态或者升级为轻量级锁，会消耗一定的性能，所以在多线程竞争频繁的情况下，偏向锁不仅不能提升性能，还会导致性能下降。
 
 2.偏向锁定在同步子系统中引入了许多复杂的代码，并且还侵入了其他 HotSpot 组件。这种复杂性是理解代码各个部分的障碍，也是在同步子系统内进行重大设计更改的障碍。为此，我们希望禁用、弃用并最终移除对偏向锁定的支持。
-
 https://openjdk.org/jeps/374		
-
 
 
 实战/技巧：避免Sysnchronized和Spring的动态代理交叉使用的坑，比如@Transactional，以及避免使用引用实例会变化的对象做锁对象。		
@@ -1100,9 +1039,6 @@ Sysnchronized锁升级过程
 
 ![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimages2.10qianwan.com%2F10qianwan%2F20180411%2Fb_0_201804110626062944.jpg&refer=http%3A%2F%2Fimages2.10qianwan.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1667375946&t=749cff6559c8c260b05efb53a0863eb2)
 
- 
-
-​			
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/1e6582ac17844ca9bd4426efd52edda8.png)
 
@@ -1197,7 +1133,6 @@ EntryList跟cxq的区别
 2. recursions - 1
 3. 根据不同的策略设置一个OnDeckThread
 
- 
 
 ![img](https://img-blog.csdnimg.cn/20210815163352506.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0NDE2MTkx,size_16,color_FFFFFF,t_70)
 
@@ -1231,20 +1166,13 @@ EntryList跟cxq的区别
 
 协程就是为解决以上问题的一种解决方案。
 
-​		Op enJDK在2018年创建了Loom项 目，这是Java用来应对本节开篇所列场景的官方解决方案，根据目前公开的信息，如无意外，日后该 项目为Java语言引入的、与现在线程模型平行的新并发编程机制中应该也会采用“纤程”这个名字
-
-
-
+​		OpenJDK在2018年创建了Loom项 目，这是Java用来应对本节开篇所列场景的官方解决方案，根据目前公开的信息，如无意外，日后该 项目为Java语言引入的、与现在线程模型平行的新并发编程机制中应该也会采用“纤程”这个名字
 
 
 ### 虚拟机篇
 
 #### 你知道“内存对齐”吗？
-
-
-
 ![img](https://upload-images.jianshu.io/upload_images/26273155-b4cfc2c19c37bd2c.png?imageMogr2/auto-orient/strip|imageView2/2/w/696/format/webp)
-
 
 
 #### 你知道的垃圾回收器有哪些？
@@ -1279,8 +1207,6 @@ Parallel Old是Parallel Scavenge收集器的老年代版本，支持多线程并
 ##### CMS
 
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/96cd6583766c479fa5479720e4c43d79.png)
-
-
 
 CMS(Concurrent Mark Sweep)收集器是一种以获取最短回收停顿时间为目标的收集器。目前很 大一部分的Java应用集中在互联网网站或者基于浏览器的B/S系统的服务端上，这类应用通常都会较为 关注服务的响应速度，希望系统停顿时间尽可能短，以给用户带来良好的交互体验。CM S收集器就非 常符合这类应用的需求。
 

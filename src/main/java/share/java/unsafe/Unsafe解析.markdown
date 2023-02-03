@@ -112,9 +112,9 @@ java -Xbootclasspath/a: ${path}   // 其中path为调用Unsafe相关方法的类
 * fullFence() 内存屏障，禁止load、store操作重排序
 * StampedLock
   * StampedLock提供了一种乐观读锁的实现，这种乐观读锁类似于无锁的操作，完全不会阻塞写线程获取写锁，从而缓解读多写少时写线程“饥饿”现象。由于StampedLock提供的乐观读锁不阻塞写线程获取读锁，当线程共享变量从主内存load到线程工作内存时，会存在数据不一致问题，所以当使用StampedLock的乐观读锁时，需要遵从如下图用例中使用的模式来确保数据的一致性
-![avatar](https://p1.meituan.net/travelcube/839ad79686d06583296f3abf1bec27e3320222.png)
+  ![avatar](https://p1.meituan.net/travelcube/839ad79686d06583296f3abf1bec27e3320222.png)
   * 下图为StampedLock.validate方法的源码实现，通过锁标记与相关常量进行位运算、比较来校验锁状态，在校验逻辑之前，会通过Unsafe的loadFence方法加入一个load内存屏障，目的是避免上图用例中步骤②和StampedLock.validate中锁状态校验运算发生重排序导致锁状态校验不准确的问题。
-![avator](https://p0.meituan.net/travelcube/256f54b037d07df53408b5eea9436b34135955.png)
+  ![avator](https://p0.meituan.net/travelcube/256f54b037d07df53408b5eea9436b34135955.png)
 
 ### 系统相关
 * addressSize() 返回系统指针的大小。返回值为4（32位系统）或 8（64位系统）

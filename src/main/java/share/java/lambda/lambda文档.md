@@ -1,19 +1,19 @@
-###1.lambda
+### 1.lambda
 - 基于stream管道
 - 使用Lambda必须有接口，并且接口中有且仅有一个抽象方法
 - @FunctionalInterface注解
 
-###2.函数式接口： 有且仅有一个抽象方法的接口
+### 2.函数式接口： 有且仅有一个抽象方法的接口
 - Supplier<T> 供给型   返回类型为T的对象，方法：T get()
 - Consumer<T>消费型   对类型为T的对象应用操作，方法：void accept(T t)
 - Predicate<T> 断定型   确定类型为T的对象是否满足某种约束，返回布尔值，方法：boolean test(T t)
 - Function<T,R>函数型   对类型为T的对象应用操作，并返回R类型的对象，方法：R apply(T,t)
 
-###3.Stream： 集合包装，stream是管道流只能被消费一遍
+### 3.Stream： 集合包装，stream是管道流只能被消费一遍
 
-###4.Spliterators： splitable iterator可分割迭代器
+### 4.Spliterators： splitable iterator可分割迭代器
 
-###5.通过对迭代器进行一系列调用后，最后收集结果
+### 5.通过对迭代器进行一系列调用后，最后收集结果
 - Collector:通过提供一个容器，并提供对每个元素处理的方法，以及合并结果的方法，以及最终呈现结果的方法
 - Collectors：生产Collector的工具类
 - Optional：一个包装对象的容器
