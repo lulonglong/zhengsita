@@ -3,9 +3,9 @@
 
 ## 简要介绍
 
-线程池（Thread Pool）是一种基于池化思想管理线程的工具，经常出现在多线程服务器中，如MySQL。
+​		线程池（Thread Pool）是一种基于池化思想管理线程的工具，经常出现在多线程服务器中，如MySQL。
 
-线程过多会带来额外的开销，其中包括创建销毁线程的开销、调度线程的开销等等，同时也降低了计算机的整体性能。线程池维护多个线程，等待监督管理者分配可并发执行的任务。这种做法，一方面避免了处理任务时创建销毁线程开销的代价，另一方面避免了线程数量膨胀导致的过分调度问题，保证了对内核的充分利用。
+​		线程过多会带来额外的开销，其中包括创建销毁线程的开销、调度线程的开销等等，同时也降低了计算机的整体性能。线程池维护多个线程，等待监督管理者分配可并发执行的任务。这种做法，一方面避免了处理任务时创建销毁线程开销的代价，另一方面避免了线程数量膨胀导致的过分调度问题，保证了对内核的充分利用。
 
 
 ## 实现原理
@@ -13,12 +13,12 @@
 ### 总体介绍
 
 * ThreadPoolExecutor类图
-![avatar](https://p1.meituan.net/travelcube/912883e51327e0c7a9d753d11896326511272.png)
-* Executor: executor
+![avatar](../assets/912883e51327e0c7a9d753d11896326511272.png)
+* Executor: executor，只有execute方法
 * ExecutorService
     * submit：返回值Future
-    * shutdown：不能在添加任务，已添加的会执行完成。  
-    * shutdownNow：不能在添加任务，已添加的不会继续执行，并返回未执行的任务。
+    * shutdown：线程池的状态立刻变成SHUTDOWN状态，不能再添加任务，已添加的会执行完成。
+    * shutdownNow：线程池的状态立刻变成STOP状态，不能再添加任务，已添加的不会继续执行，并return未执行的任务列表。调用Thread.interrupt()方法来中断正在执行的线程，任务会不会马上退出要看任务是否响应interrupt。
 
 * ThreadPoolExecutor：
     * 线程池的实现类
@@ -29,7 +29,7 @@
     * allowCoreThreadTimeOut: 是否允许核心线程过期从而回收掉
 
 * 执行流程图
-  ![avatar](https://p0.meituan.net/travelcube/77441586f6b312a54264e3fcf5eebe2663494.png)
+  ![avatar](../assets/77441586f6b312a54264e3fcf5eebe2663494.png)
 
 ### 线程池的生命周期
 
@@ -48,24 +48,31 @@
 #### TERMINATED
 关闭状态
 
-![avatar](https://p0.meituan.net/travelcube/582d1606d57ff99aa0e5f8fc59c7819329028.png)
+![avatar](../assets/582d1606d57ff99aa0e5f8fc59c7819329028.png)
 
 ### 任务的执行机制
 
 #### 线程的创建
 * 首先检测线程池运行状态，如果不是RUNNING，则直接拒绝，线程池要保证在RUNNING的状态下执行任务。
+
 * 如果workerCount < corePoolSize，则创建并启动一个线程来执行新提交的任务。
+
 * 如果workerCount >= corePoolSize，且线程池内的阻塞队列未满，则将任务添加到该阻塞队列中。
+  ```
+  如果此处感觉不合逻辑是正常的。
+  按照这种设计思想，应该在创建线程池时就应该评估好业务处理量，设定一个合理的coresize，正常情况让核心线程处理即可正常消耗任务，如果偶然高峰处理不过来则加到队列缓冲，队列缓冲满了代表核心线程难以应付，则再开启新线程。
+  另外一种普遍觉得合理的思路是workerCount >= corePoolSize，则优先开新线程以求快速消耗任务，开到最大线程数依然处理不了才放队列。如果这么设计的话，会导致超过核心线程数以外的线程频繁的创建回收，与池化思想不符。
+  ```
 * 如果workerCount >= corePoolSize && workerCount < maximumPoolSize，且线程池内的阻塞队列已满，则创建并启动一个线程来执行新提交的任务。
+
 * 如果workerCount >= maximumPoolSize，并且线程池内的阻塞队列已满, 则根据拒绝策略来处理该任务, 默认的处理方式是直接抛异常。
 
-![avatar](https://p0.meituan.net/travelcube/31bad766983e212431077ca8da92762050214.png)
+![avatar](../assets/31bad766983e212431077ca8da92762050214.png)
 
 #### 阻塞队列
 * ArrayBlockingQueue：数组实现的有界队列，按照先进先出的原则排序
 * PriorityBlockingQueue
   * 数组实现的无界队列，支持自定义排序
-  * test1
 * DelayQueue：实现PriorityBlockingQueue的延迟获取的无界队列, 在加入队列时，可以指定线程多久以后才能获取到任务
   * ScheduledThreadPoolExecutor
 * LinkedBlockingDeque：链表实现的无界队列，队列头和尾均可以添加和移除任务，提高性能
@@ -87,18 +94,18 @@
 * ThreadPoolExecutor.CallerRunsPolicy
   * 由当前线程处理该任务
   * 适合必须要执行的业务
+  * 这种策略要注意一点，任务需要做好异常处理，否则报错会把主线程给停止了
 
 #### Worker
 * 线程池内的工作线程，为了方便线程池管理线程的状态而建立的。
 * 一个Worker对象，持有一个线程
-  ![avatar](https://p0.meituan.net/travelcube/03268b9dc49bd30bb63064421bb036bf90315.png)
-  
+  ![avatar](../assets/03268b9dc49bd30bb63064421bb036bf90315.png)
 
 #### 核心方法 
 * execute
   * 添加任务并执行
   * 源码分析
-```
+```java
   
   public void execute(Runnable command) {
         
@@ -117,10 +124,9 @@
             if (! isRunning(recheck) && remove(command))
                 reject(command);
             else if (workerCountOf(recheck) == 0)
-                // 当核心线程数为0，则此时新建一个非核心线程，去执行任务
+                // 当核心线程数为0，则此时新建一个非核心线程，去执行任务。配置为核心线程数为0时会出现这个情况
                 addWorker(null, false);
         }
-        
         // 创建非核心线程并执行任务，创建失败则执行拒绝策略
         else if (!addWorker(command, false))
             reject(command);
@@ -132,7 +138,7 @@
   * 新增并启动线程
   * 源码分析
   
-```
+```java
     private boolean addWorker(Runnable firstTask, boolean core) {
     
         // 检查是否需要新增线程
@@ -220,7 +226,7 @@
   * 线程从阻塞队列中获取任务并执行
   * 源码分析
 
-```
+```java
 
     private Runnable getTask() {
         
