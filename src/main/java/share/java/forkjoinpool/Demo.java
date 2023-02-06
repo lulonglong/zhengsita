@@ -13,6 +13,10 @@ public class Demo {
 
 	public static void main(String[] args) throws Exception{
 
+		for (Integer i = 0; i < 10; i++) {
+			System.out.println(i.hashCode());
+		}
+
 
 		List<String> list = Lists.newArrayList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
