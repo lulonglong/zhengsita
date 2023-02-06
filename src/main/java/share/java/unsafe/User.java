@@ -1,5 +1,7 @@
 package share.java.unsafe;
 
+import sun.reflect.Reflection;
+
 import java.io.Serializable;
 
 /**
@@ -8,6 +10,12 @@ import java.io.Serializable;
  */
 public class User implements Serializable {
 
+	public User(){
+		age=1;
+	}
+	public static void main(String[] args) {
+		System.out.println(Reflection.getCallerClass(3));
+	}
 	private String name;
 
 	private int age;

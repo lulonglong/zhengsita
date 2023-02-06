@@ -9,7 +9,7 @@
 
 ### 单例类
 
-​		Unsafe类为一单例实现，提供静态方法getUnsafe获取Unsafe实例，当且仅当调用getUnsafe方法的类为引导类加载器所加载时才合法，否则抛出SecurityException异常。
+​		Unsafe类为单例实现，提供静态方法getUnsafe获取Unsafe实例，当且仅当调用getUnsafe方法的类为引导类加载器所加载时才合法，否则抛出SecurityException异常。
 
 * 类加载器
   * 引导类加载器(Bootstrap ClassLoader), 用来加载 Java 的核心库，是用原生代码来实现的，并不继承自 java.lang.ClassLoader
@@ -206,6 +206,10 @@ java -Xbootclasspath/a: ${path}   // 其中path为调用Unsafe相关方法的类
 
 ​		Test类编译后的class文件反编译后的结果如下图一所示（删除了对本文说明无意义的部分），我们可以从中看到main方法的指令实现、invokedynamic指令调用的引导方法BootstrapMethods、及静态方法lambda$main$0（实现了Lambda表达式中字符串打印逻辑）等。在引导方法执行过程中，会通过Unsafe.defineAnonymousClass生成如下图二所示的实现Consumer接口的匿名类。其中，accept方法通过调用Test类中的静态方法lambda$main$0来实现Lambda表达式中定义的逻辑。而后执行语句consumer.accept（"lambda"）其实就是调用下图二所示的匿名类的accept方法。
 
+```
+所有的匿名类都会生成对应的class文件，直接到对应class文件夹中查看，不要在开发工具中看，开发工具只会显示主类的class文件
+```
+
 ![avator](../assets/1038d53959701093db6c655e4a342e30456249.png)
 
 ### 对象操作
@@ -226,7 +230,7 @@ java -Xbootclasspath/a: ${path}   // 其中path为调用Unsafe相关方法的类
 * allocateInstance(Class<?> cls) throws InstantiationException
   * 绕过构造方法、初始化代码来创建对象
   * Unsafe中提供allocateInstance方法，仅通过Class对象就可以创建此类的实例对象，而且不需要调用其构造函数、初始化代码、JVM安全检查等。它抑制修饰符检测，也就是即使构造器是private修饰的也能通过此方法实例化，只需提类对象即可创建相应的对象。由于这种特性，allocateInstance在java.lang.invoke、Objenesis（提供绕过类构造器的对象生成方式）、Gson（反序列化时用到）中都有相应的应用
-  * 在Gson反序列化时，如果类有默认构造函数，则通过反射调用默认构造函数创建实例，否则通过UnsafeAllocator来实现对象实例的构造，UnsafeAllocator通过调用Unsafe的allocateInstance实现对象的实例化，保证在目标类无默认构造函数时，反序列化不够影响
+  * 在Gson反序列化时，如果类有默认构造函数，则通过反射调用默认构造函数创建实例，否则通过UnsafeAllocator来实现对象实例的构造，UnsafeAllocator通过调用Unsafe的allocateInstance实现对象的实例化，保证在目标类无默认构造函数时，反序列化不受影响
   * ![avatar](../assets/b9fe6ab772d03f30cd48009920d56948514676.png)
 
 ## 参考文档

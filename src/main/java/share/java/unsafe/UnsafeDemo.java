@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSON;
 import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author liyuxiang
@@ -18,7 +20,7 @@ public class UnsafeDemo {
 		Unsafe unsafe = getUnsafe();
 
 		User user = new User();
-
+		System.out.println(user.getAge());
 		long ageAddress = unsafe.objectFieldOffset(User.class.getDeclaredField("age"));
 		unsafe.putInt(user, ageAddress, 18);
 
@@ -26,6 +28,15 @@ public class UnsafeDemo {
 		test1(unsafe);
 
 		test2(unsafe);
+
+		User user2=(User) unsafe.allocateInstance(User.class);
+		System.out.println(user2.getAge());
+		Map<String,String> map=new HashMap(){
+			{
+				put("1","2");
+			}
+		};
+		System.out.println(map);
 	}
 
 	/**

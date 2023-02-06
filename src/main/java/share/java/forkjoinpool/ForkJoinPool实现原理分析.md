@@ -2,17 +2,17 @@
 # ForkJoinPool实现原理
 
 ## 总体介绍
-ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务框架。其主旨是将大任务分成若干小任务，之后再并行对这些小任务进行计算，最终汇总这些任务的结果。得到最终的结果。其广泛用在java8的stream中。
-这个描述实际上比较接近于单机版的map-reduce。都是采用了分治算法，将大的任务拆分到可执行的任务，之后并行执行，最终合并结果集。区别就在于ForkJoin机制可能只能在单个jvm上运行，而map-reduce则是在集群上执行。此外，ForkJoinPool采取工作窃取算法，以避免工作线程由于拆分了任务之后的join等待过程。这样处于空闲的工作线程将从其他工作线程的队列中主动去窃取任务来执行。这里涉及到的两个基本知识点是分治法和工作窃取。
+​		ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务框架。其主旨是将大任务分成若干小任务，之后再并行对这些小任务进行计算，最终汇总这些任务的结果。得到最终的结果。其广泛用在java8的stream中。
+​		这个描述实际上比较接近于单机版的map-reduce。都是采用了分治算法，将大的任务拆分到可执行的小任务，之后并行执行，最终合并结果集。区别就在于ForkJoin机制只能在单个jvm上运行，而map-reduce则是在集群上执行。此外，ForkJoinPool采取工作窃取算法，以避免工作线程由于拆分了任务之后的join等待过程。这样处于空闲的工作线程将从其他工作线程的队列中主动去窃取任务来执行。这里涉及到的两个基本知识点是分治法和工作窃取。
 
 ## 知识铺垫
 ### 分治法
 * 分治法的基本思想是将一个规模为N的问题分解为K个规模较小的子问题，这些子问题的相互独立且与原问题的性质相同，求出子问题的解之后，将这些解合并，就可以得到原有问题的解。是一种分目标完成的程序算法。
-  ![alt 分治法原理图](https://img-stage.yit.com/CMSRESQN/8f537d34e204e17941885ce568d328d6_794X658.png)
+  ![alt 分治法原理图](../assets/8f537d34e204e17941885ce568d328d6_794X658.png)
 
 ### 工作窃取
-* 工作窃取是指当某个线程的任务队列中没有可执行任务的时候，从其他线程的任务队列中窃取任务来执行，以充分利用工作线程的计算能力，减少线程由于获取不到任务而造成的空闲浪费。在ForkJoinPool中，工作任务的队列都采用双端队列Deque容器。我们知道，在通常使用队列的过程中，我们都在队尾插入，而在队头消费以实现FIFO。而为了实现工作窃取。一般我们会改成工作线程在工作队列上LIFO,而窃取其他线程的任务的时候，从队列头部取获取。
-![alt ForkJoinPool 中的 work-stealing 算法](https://upload-images.jianshu.io/upload_images/6050820-6f7e15e2dd192c8a.png)
+* 工作窃取是指当某个线程的任务队列中没有可执行任务的时候，从其他线程的任务队列中窃取任务来执行，以充分利用工作线程的计算能力，减少线程由于获取不到任务而造成的空闲浪费。在ForkJoinPool中，工作任务的队列都采用双端队列Deque容器。我们知道，在通常使用队列的过程中，我们都在队尾插入，而在队头消费以实现FIFO。而为了实现工作窃取。一般我们会改成工作线程在工作队列上LIFO（栈），而窃取其他线程的任务的时候，从队列头部取获取。
+![alt ForkJoinPool 中的 work-stealing 算法](../assets/6050820-6f7e15e2dd192c8a.png)
 
 ## 基本组成部分
 
@@ -72,12 +72,12 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
   * 用于监控steal的计数器
   
 
-![ForkJoinPool 队列任务分布](https://upload-images.jianshu.io/upload_images/6050820-bb9f0a717d8490bf.png)
+![ForkJoinPool 队列任务分布](../assets/6050820-bb9f0a717d8490bf.png)
 
 ### 构造函数
 * parallelism 并行度
   * workQueues 的长度等都是根据这个并行度来计算的
-```
+```java
     externalSubmit()方法中：
         int n = (p > 1) ? p - 1 : 1;
         n |= n >>> 1; n |= n >>> 2;  n |= n >>> 4;
@@ -96,12 +96,11 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 ### invoke 
 * 提交任务，并等待返回执行结果
 
-```
+```java
     public <T> T invoke(ForkJoinTask<T> task) {
         if (task == null)
             throw new NullPointerException();
         
-        // 
         externalPush(task);
         return task.join();
     }
@@ -109,7 +108,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 
 ### submit
 * 提交并立刻返回任务
-```
+```java
     public <T> ForkJoinTask<T> submit(ForkJoinTask<T> task) {
         if (task == null)
             throw new NullPointerException();
@@ -120,7 +119,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 
 ### execute
 * 只提交任务
-```
+```java
     public void execute(ForkJoinTask<?> task) {
         if (task == null)
             throw new NullPointerException();
@@ -133,7 +132,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 ### ForkJoinWorkerThread
 * 由ForkJoinWorkerThreadFactory创建，是ForkJoinPool的工作线程
 * 工作线程中的ForkJoinPool.WorkQueue，是放在ForkJoinPool的workQueues奇数槽位上的
-* 在执行自己workQueue中的task时，按照FIFO，窃取其他线程任务对中的task时，是FIFO
+* 在执行自己workQueue中的task时，按照LIFO，窃取其他线程任务对中的task时，是FIFO
 
 
 ### ForkJoinPool.WorkQueue
@@ -151,7 +150,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
   
 * top
   * int 
-  * 下一个pull操作的索引
+  * 下一个push操作的索引
 
 * owner
   * 当前工作队列的工作线程，共享模式下为null
@@ -169,7 +168,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 
 * push()
   * push方法是提供给工作队列自己push任务来使用的，共享队列push任务是在外部externalPush和externalSubmit等方法来进行初始化和push
-  * 当队列中的任务数小于1的时候，才会调用signalWork(), 这个地方一开始并不理解，实际上，我们需要注意的是，这个方法是专门提供给工作队列来使用的，那么这个条件满足的时候，说明工作队列空闲。如果这个条件不满足，那么工作队列中有很多任务需要工作队列来处理，就不会触发对这个队列的窃取操作
+  * 当队列中的任务数小于1的时候，才会调用signalWork()，这个地方一开始并不理解，实际上，我们需要注意的是，这个方法是专门提供给工作队列来使用的，那么这个条件满足的时候，说明工作队列空闲。如果这个条件不满足，那么工作队列中有很多任务需要工作队列来处理，就不会触发对这个队列的窃取操作
 
 * pop()
   * pop操作也仅限于工作线程，对于共享对立中则不允许使用pop方法。这个方法将按LIFO后进先出的方式从队列中
@@ -193,7 +192,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 * invokeAll()
   * invokeAll() 会比单纯使用fork+join会节省一个线程。即当前的调用线程也会参与计算过程。如果不用invoke，只用fork和join，这样会造成当前线程浪费
   
-```
+```java
   public static void invokeAll(ForkJoinTask<?>... tasks) {
     Throwable ex = null;
     int last = tasks.length - 1;
@@ -229,14 +228,14 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 
 ## 执行流程
 ### 执行流程图
-![执行流程图](https://upload-images.jianshu.io/upload_images/6050820-fef6959a54e7850e.png)
+![执行流程图](../assets/6050820-fef6959a54e7850e.png)
 
 ### ForkJoinPool
 #### externalPush()
 * 添加到任务队列。
 * 提交成功之后，调用signalWork方法让其他的worker来窃取
   
-```
+```java
     /**
      * 尝试将任务添加到提交者当前的队列中，此方法只处理大多数情况，实际上是根据随机数指定一个workQueues的槽位，如果这个位置存在WorkQueue，则加入队列，然后调用signalWork通知其他工作线程来窃取。反之，则通过externalSubmit处理。这只适用于提交队列存在的普通情况。更复杂的逻辑参考externalSubmit。
      *
@@ -284,7 +283,7 @@ ForkJoinPool是自 Java7 开始，jvm提供的一个用于并行执行的任务�
 * 创建新的队列，并进行初始化
 * 这个地方将产生的无owoner的workQueue放置在索引k的位置，需要注意的是k的计算过程，k= r & m & SQMASK。r是随机数，m是数组的长度，而SQMASK最后一位不为1，这就导致不管r如何变化，得到的k最后一位都不为1，这就构造了一个偶数k最后一位为0，k不可能是奇数
   
-```
+```java
 /**
  *externalPush的完整版本，处理那些不常用的逻辑。如第一次push的时候进行初始化、此外如果索引队列为空或者被占用，那么创建一个新的任务队列。
  *
@@ -416,7 +415,7 @@ private void externalSubmit(ForkJoinTask<?> task) {
 * 判断worker是否充足，如果不够，则创建新的worker。
 * 判断worker的状态是否被park了，如果park则用unpark唤醒。这样worker就可以取scan其他队列进行窃取了
   
-```
+```java
 
 /**
  * 此处将激活worker Thread。如果工作线程太少则创建，反之则来进行窃取。
@@ -428,7 +427,7 @@ final void signalWork(WorkQueue[] ws, WorkQueue q) {
     long c; int sp, i; WorkQueue v; Thread p;
     //如果ctl为负数  ctl初始化的时候就会为负数 如果小于0  说明有任务需要处理
     while ((c = ctl) < 0L) {                       // too few active
-        //c为long，强转int 32位的高位都丢弃，此时如果没有修改过ctl那么低位一定为0 可参考前面ctl的推算过程，所以此处sp 为0 sp为0则说明每月空闲的worker
+        //c为long，强转int 32位的高位都丢弃，此时如果没有修改过ctl那么低位一定为0 可参考前面ctl的推算过程，所以此处sp 为0 sp为0则说明没有空闲的worker
         if ((sp = (int)c) == 0) {                  // no idle workers
             //还是拿c与ADD_WORKER取& 如果不为0 则说明worker太少，需要新增worker
             if ((c & ADD_WORKER) != 0L)            // too few workers
@@ -471,7 +470,7 @@ final void signalWork(WorkQueue[] ws, WorkQueue q) {
 #### tryAddWorker()
 * 尝试添加一个新的工作线程，首先更新ctl中的工作线程数，然后调用createWorker()创建工作线程
 
-```
+```java
 /**
  * 尝试新增一个worker，然后增加ctl中记录的worker的数量
  *
@@ -512,7 +511,7 @@ private void tryAddWorker(long c) {
 #### createWorker()
 * createWorker首先通过线程工厂创一个新的ForkJoinWorkerThread，然后启动这个工作线程（wt.start()）。如果期间发生异常，调用deregisterWorker处理线程创建失败的逻辑（deregisterWorker在后面再详细说明）。
 
-```
+```java
 
 /**
  * 创建并启动一个worker，因为前面已经做了增加count，如果此处出现异常，创建worker不成功，则在deregisterWorker中会判断如果ex不为空，且当前为创建状态的话，会重新进入tryAddWorker方法。
@@ -551,7 +550,7 @@ private boolean createWorker() {
 #### run()
 * 在workQueue创建完成之后，下一步，这些线程的run方法调用后被启动。之后就进入了worker线程的生命周期了
 
-```
+```java
 
   public void run() {
         if (workQueue.array == null) { // only run once
@@ -579,7 +578,7 @@ private boolean createWorker() {
 #### runWorker()
 * 这是worker工作线程的执行方法。通过死循环，不断scan是否有任务，之后窃取这个任务进行执行
 
-```
+```java
 
 /**
  * 通过调用线程的run方法，此时开始最外层的runWorker
@@ -609,7 +608,7 @@ final void runWorker(WorkQueue w) {
 #### runTask()
 * doExec 方法才是真正执行任务的关键，它是链接我们自定义 compute() 方法的核心，来看 doExec() 方法
 
-```
+```java
 
       final void runTask(ForkJoinTask<?> task) {
             if (task != null) {
@@ -635,7 +634,7 @@ final void runWorker(WorkQueue w) {
 #### doExec()
 * 这里是我们逻辑拆分和执行的地方，ForkJoinWorkerThread中的runTask() 负责调用doExec()
 
-```
+```java
 
     final int doExec() {
         int s; boolean completed;
@@ -661,7 +660,7 @@ final void runWorker(WorkQueue w) {
 
 #### fork()
 * 如果当前线程是 ForkJoinWorkerThread 类型，也就是说已经通过上文注册的 Worker，那么直接调用 push 方法将 task 放到当前线程拥有的 WorkQueue 中，否则就再调用 externalPush
-```
+```java
 
     public final ForkJoinTask<V> fork() {
         Thread t;
@@ -693,7 +692,7 @@ final void runWorker(WorkQueue w) {
 #### join()
 * join 的核心调用在 doJoin
 
-```
+```java
     public final V join() {
         int s;
         if ((s = doJoin() & DONE_MASK) != NORMAL)
@@ -724,7 +723,7 @@ final void runWorker(WorkQueue w) {
 * 使用默认的ForkJoinPool, java.util.concurrent.ForkJoinPool.commonPool
 * fork()+join()的实现 java.util.stream.ForEachOps.ForEachTask.compute
 
-```
+```java
         List<String> list = Lists.newArrayList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
 		list.parallelStream().forEach(s -> {
@@ -734,7 +733,7 @@ final void runWorker(WorkQueue w) {
 ```
 
 * 使用自定义的ForkJoinPool
-```
+```java
         ForkJoinPool forkJoinPool = new ForkJoinPool(8);
 		forkJoinPool.submit(() -> list.parallelStream().forEach(s -> {
 			System.out.println("thread name:" + Thread.currentThread().getName() + ", value:" + s);

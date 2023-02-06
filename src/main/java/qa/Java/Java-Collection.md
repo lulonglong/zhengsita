@@ -3,14 +3,14 @@
 Java 集合， 也叫作容器，主要是由两大接口派生而来：一个是 Collection接口，主要用于存放单一元素；另一个是 Map 接口，主要用于存放键值对。对于Collection 接口，下面又有三个主要的子接口：List、Set 和 Queue。
 
 Java 集合框架如下图所示：
-![alt](https://guide-blog-images.oss-cn-shenzhen.aliyuncs.com/github/javaguide/java/collection/java-collection-hierarchy.png)
+![alt](../assets/java-collection-hierarchy.png)
 
 ## ArrayList和LinkedList有什么区别
 
 1. 数据结构不同
 * ArrayList基于数组实现
 * LinkedList基于双向链表实现
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-2.png)
+![alt](../assets/collection-2.png)
 
 2. 多数情况下，ArrayList更利于查找，LinkedList更利于增删
 * ArrayList基于数组实现，get(int index)可以直接通过数组下标获取，时间复杂度是O(1)；
@@ -34,7 +34,7 @@ ArrayList是基于数组的集合，数组的容量是在定义的时候确定�
 
 ArrayList的扩容是创建一个1.5倍的新数组，然后把原数组的值拷贝过去。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-5.png)
+![alt](../assets/collection-5.png)
 
 ## ArrayList怎么序列化的知道吗？ 为什么用transient修饰数组？
 
@@ -48,7 +48,7 @@ ArrayList的序列化不太一样，它使用transient修饰存储元素的eleme
 
 ArrayList通过两个方法readObject、writeObject自定义序列化和反序列化策略，实际直接使用两个流ObjectOutputStream和ObjectInputStream来进行序列化和反序列化。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-6.png)
+![alt](../assets/collection-6.png)
 
 ## 快速失败(fail-fast)和安全失败(fail-safe)了解吗？
 
@@ -81,7 +81,7 @@ CopyOnWriteArrayList就是线程安全版本的ArrayList。
 
 CopyOnWriteArrayList采用了一种读写分离的并发策略。CopyOnWriteArrayList容器允许并发读，读操作是无锁的，性能较高。至于写操作，比如向容器中添加一个元素，则首先将当前容器复制一份，然后在新副本上执行写操作，结束之后再将原容器的引用指向新容器。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-7.png)
+![alt](../assets/collection-7.png)
 
 ## 能说一下HashMap的数据结构吗？
 
@@ -92,7 +92,7 @@ JDK1.7的数据结构是数组+链表。
 JDK1.8的数据结构是数组+链表+红黑树。
 
 数据结构示意图如下：
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-8.png)
+![alt](../assets/collection-8.png)
 
 其中，桶数组是用来存储数据元素，链表是用来解决冲突，红黑树是为了提高查询的效率。
 
@@ -120,17 +120,17 @@ JDK1.8的数据结构是数组+链表+红黑树。
 红黑树有两种方式保持平衡：旋转和染色。
 
 * 旋转：旋转分为两种，左旋和右旋
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-10.png)
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-11.png)
+![alt](../assets/collection-10.png)
+![alt](../assets/collection-11.png)
 
 * 染⾊：
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-12.png)
+![alt](../assets/collection-12.png)
 
 ## HashMap的put流程知道吗？
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-13.jpg)
+![alt](../assets/collection-13.png)
 * 首先进行哈希值的扰动，获取一个新的哈希值。(key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16);
 * 判断tab是否位空或者长度为0，如果是则进行扩容操作。
-```
+```java
 if ((tab = table) == null || (n = tab.length) == 0)
     n = (tab = resize()).length;
 ```
@@ -140,7 +140,7 @@ if ((tab = table) == null || (n = tab.length) == 0)
 * 最后所有元素处理完成后，判断是否超过阈值；threshold，超过则扩容。
 
 ## HashMap怎么查找元素的呢？
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-14.png)
+![alt](../assets/collection-14.png)
 * 使用扰动函数，获取新的哈希值
 * 计算数组下标，获取节点
 * 当前节点和key匹配，直接返回
@@ -150,7 +150,7 @@ if ((tab = table) == null || (n = tab.length) == 0)
 ## HashMap的哈希/扰动函数是怎么设计的?
 HashMap的哈希函数是先拿到 key 的hashcode，是一个32位的int类型的数值，然后让hashcode的高16位和低16位进行异或操作。
 这么设计是为了降低哈希碰撞的概率。
-```
+```java
     static final int hash(Object key) {
         int h;
         // key的hashCode和key的hashCode右移16位做异或运算
@@ -167,7 +167,7 @@ HashMap的哈希函数是先拿到 key 的hashcode，是一个32位的int类型�
 假如 HashMap 数组的初始大小才 16，就需要用之前需要对数组的长度取模运算，得到的余数才能用来访问数组下标。
 
 源码中模运算就是把散列值和数组长度-1 做一个 "与&" 操作，位运算比取余 % 运算要快。
-```
+```java
 bucketIndex = indexFor(hash, table.length);
 
 static int indexFor(int h, int length) {
@@ -177,12 +177,12 @@ static int indexFor(int h, int length) {
 
 顺便说一下，这也正好解释了为什么 HashMap 的数组长度要取 2 的整数幂。因为这样（数组长度 - 1）正好相当于一个 “低位掩码”。与 操作的结果就是散列值的高位全部归零，只保留低位值，用来做数组下标访问。以初始长度 16 为例，16-1=15。2 进制表示是 0000 0000 0000 0000 0000 0000 0000 1111。和某个散列值做 与 操作如下，结果就是截取了最低的四位值。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-15.png)
+![alt](../assets/collection-15.png)
 
 这样是要快捷一些，但是新的问题来了，就算散列值分布再松散，要是只取最后几位的话，碰撞也会很严重。如果散列本身做得不好，分布上成等差数列的漏洞，如果正好让最后几个低位呈现规律性重复，那就更难搞了。
 
 这时候 扰动函数 的价值就体现出来了，看一下扰动函数的示意图：
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-16.jpg)
+![alt](../assets/collection-16.png)
 
 右移 16 位，正好是 32bit 的一半，自己的高半区和低半区做异或，就是为了混合原始哈希码的高位和低位，以此来加大低位的随机性。而且混合后的低位掺杂了高位的部分特征，这样高位的信息也被变相保留下来。
 
@@ -194,7 +194,7 @@ HashMap的容量是2的n次幂时，(n-1)的2进制也就是1111111***111这样�
 
 * 第二个方面是在扩容时，利用扩容后的大小也是2的倍数，将已经产生hash碰撞的元素完美的转移到新的table中去
 我们可以简单看看HashMap的扩容机制，HashMap中的元素在超过负载因子*HashMap大小时就会产生扩容。
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-17.png)
+![alt](../assets/collection-17.png)
 
 ## 如果初始化HashMap，传一个17的值new HashMap<>，它会怎么处理
 就是初始化时，传的不是2的倍数时，HashMap会向上寻找离得最近的2的倍数，所以传入17，但HashMap的实际容量是32。
@@ -213,7 +213,7 @@ HashMap里哈希构造函数的方法叫：
 * 折叠法
   * 将key分割成位数相同的几段，然后把它们的叠加和作为映射的位置
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-19.png)
+![alt](../assets/collection-19.png)
 
 ## 解决哈希冲突有哪些方法呢？
 我们到现在已经知道，HashMap使用链表的原因为了处理哈希冲突，这种方法就是所谓的：
@@ -264,15 +264,15 @@ HashMap是基于数组+链表和红黑树实现的，但用于存放key值的桶
 
 看下这张图，n为table的长度，图a表示扩容前的key1和key2两种key确定索引的位置，图b表示扩容后key1和key2两种key确定索引位置。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-25.png)
+![alt](../assets/collection-25.png)
 
 元素在重新计算hash之后，因为n变为2倍，那么n-1的mask范围在高位多1bit(红色)，因此新的index就会发生这样的变化：
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-26.png)
+![alt](../assets/collection-26.png)
 
 所以在扩容时，只需要看原来的hash值新增的那一位是0还是1就行了，是0的话索引没变，是1的化变成原索引+oldCap，看看如16扩容为32的示意图：
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-27.png)
+![alt](../assets/collection-27.png)
 
 
 ## jdk1.8对HashMap主要做了哪些优化呢？为什么？
@@ -320,7 +320,7 @@ ConcurrentHashmap线程安全在jdk1.7版本是基于分段锁实现，在jdk1.8
 从结构上说，1.7版本的ConcurrentHashMap采用分段锁机制，里面包含一个Segment数组，Segment继承于ReentrantLock，Segment则包含HashEntry的数组，HashEntry本身就是一个链表的结构，具有保存key、value的能力能指向下一个节点的指针。
 
 实际上就是相当于每个Segment都是一个HashMap，默认的Segment长度是16，也就是支持16个线程的并发写，Segment之间相互不会受到影响。
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-31.png)
+![alt](../assets/collection-31.png)
 
 put流程
 
@@ -337,7 +337,7 @@ jdk1.8实现线程安全不是在数据结构上下功夫，它的数据结构�
 
 put流程
 1. 首先计算hash，遍历node数组，如果node是空的话，就通过CAS+自旋的方式初始化
-```
+```java
  tab = initTable();
 private final Node<K,V>[] initTable() {
     Node<K,V>[] tab; int sc;
@@ -366,7 +366,7 @@ private final Node<K,V>[] initTable() {
 ```
 
 2. 如果当前数组位置是空则直接通过CAS自旋写入数据
-```
+```java
 static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
                                     Node<K,V> c, Node<K,V> v) {
     return U.compareAndSwapObject(tab, ((long)i << ASHIFT) + ABASE, c, v);
@@ -374,7 +374,7 @@ static final <K,V> boolean casTabAt(Node<K,V>[] tab, int i,
 ```
 
 3. 如果hash==MOVED，说明需要扩容，执行扩容
-```
+```java
 else if ((fh = f.hash) == MOVED)
     tab = helpTransfer(tab, f);
                 
@@ -400,7 +400,7 @@ final Node<K,V>[] helpTransfer(Node<K,V>[] tab, Node<K,V> f) {
 ```
 
 4. 如果都不满足，就使用synchronized写入数据，写入数据同样判断链表、红黑树，链表写入和HashMap的方式一样，key hash一样就覆盖，反之就尾插法，链表长度超过8就转换成红黑树
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-32.jpg)
+![alt](../assets/collection-32.png)
 
 get查询
 get很简单，和HashMap基本相同，通过key计算位置，table该位置key相同就返回，如果是红黑树按照红黑树获取，否则就遍历链表获取。
@@ -411,32 +411,32 @@ HashMap是无序的，根据 hash 值随机插入。如果想使用有序的Map�
 ## 讲讲 LinkedHashMap 怎么实现有序的？
 LinkedHashMap维护了一个双向链表，有头尾节点，同时 LinkedHashMap 节点 Entry 内部除了继承 HashMap 的 Node 属性，还有 before 和 after 用于标识前置节点和后置节点。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-33.png)
+![alt](../assets/collection-33.png)
 
 可以实现按插入的顺序或访问顺序排序。
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-34.png)
+![alt](../assets/collection-34.png)
 
 ## 讲讲 TreeMap 怎么实现有序的？
 TreeMap 是按照 Key 的自然顺序或者 Comparator 的顺序进行排序，内部是通过红黑树来实现。所以要么 key 所属的类实现 Comparable 接口，或者自定义一个实现了 Comparator 接口的比较器，传给 TreeMap 用于 key 的比较。
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-35.png)
+![alt](../assets/collection-35.png)
 
 ## 讲讲HashSet的底层实现
 HashSet 底层就是基于 HashMap 实现的。（ HashSet 的源码⾮常⾮常少，因为除了 clone() 、 writeObject() 、 readObject() 是 HashSet⾃⼰不得不实现之外，其他⽅法都是直接调⽤ HashMap 中的⽅法。
 
 HashSet的add方法，直接调用HashMap的put方法，将添加的元素作为key，new一个Object作为value，直接调用HashMap的put方法，它会根据返回值是否为空来判断是否插入元素成功。
 
-```
+```java
 public boolean add(E e) {
     return map.put(e, PRESENT)==null;
 }
 ```
 
-![alt](http://cdn.tobebetterjavaer.com/tobebetterjavaer/images/sidebar/sanfene/collection-36.png)
+![alt](../assets/collection-36.png)
 
 而在HashMap的putVal方法中，进行了一系列判断，最后的结果是，只有在key在table数组中不存在的时候，才会返回插入的值。
 
-```
+```java
 if (e != null) { // existing mapping for key
     V oldValue = e.value;
     if (!onlyIfAbsent || oldValue == null)
@@ -445,18 +445,3 @@ if (e != null) { // existing mapping for key
     return oldValue;
 }
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
