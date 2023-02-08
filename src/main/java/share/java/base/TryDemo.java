@@ -3,10 +3,11 @@ package share.java.base;
 public class TryDemo {
 
     public static void main(String[] args) {
-
         Integer a = 128, b = 128, c = 127, d = 127;
-        System.out.println(a == Integer.parseInt("128"));
-        System.out.println(c == Integer.parseInt("127"));
+        System.out.println(a == b);//false
+        System.out.println(c == d);//true
+        System.out.println(a == Integer.parseInt("128"));//true
+        System.out.println(c == Integer.parseInt("127"));//true
 
 
         System.out.println(test1());

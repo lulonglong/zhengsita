@@ -2,29 +2,27 @@
 
 #### 1.sleep() 和 wait() 有什么区别？
 
+两者都会让线程进入超时等待状态。
+
 类的不同：sleep() 来自 Thread，wait() 来自 Object。
 
 释放锁：sleep() 不释放锁；wait() 释放锁。
 
-用法不同：sleep() 时间到会自动恢复；wait() 可以使用 notify()/notifyAll()直接唤醒  
-
-
+用法不同：sleep() 时间到会自动恢复；wait() 可以使用 notify()/notifyAll()直接唤醒。
 
 #### 2.线程的 sleep() 方法和 yield() 方法有什么区别？
+
+yield是让渡出cpu占用
 
 线程执行 sleep() 方法后进入超时等待（TIMED_WAITING）状态，而执行 yield() 方法后进入就绪（READY）状态。
 
 sleep() 方法给其他线程运行机会时不考虑线程的优先级，因此会给低优先级的线程运行的机会；yield() 方法只会给相同优先级或更高优先级的线程以运行的机会。 
 
-
-
 #### 3.什么是多线程中的上下文切换？
 
 上下文切换（有时也称做进程切换或任务切换）是指 CPU 从一个进程（或线程）切换到另一个进程（或线程）。上下文是指某一时间点 CPU 寄存器和程序计数器的内容。
 
-
-
-#### 4.在 java 中守护线程和本地线程区别？
+#### 4.在 java 中守护线程和本地线程的区别？
 
 我们大部分时间所使用的线程，都是本地线程。进程中有一个本地线程没有结束工作，进程都不会退出。
 
@@ -32,15 +30,11 @@ sleep() 方法给其他线程运行机会时不考虑线程的优先级，因此
 
 一个程序的日志搜集线程，等等。此种线程会在进程中所有本地线程完成之后，自动消亡。
 
-我们创建线程时，除主动设置，默认情况下，线程是否属于守护线程的属性继承自父线程。
-
-通过setDaemon进行设置。
-
-
+我们创建线程时，除通过setDaemon进行设置，默认情况下，线程是否属于守护线程的属性继承自父线程。启动线程是非守护线程，所以默认情况都是非守护线程。
 
 #### 5.线程的状态流转
 
-![img](https://img-blog.csdnimg.cn/20210401000320769.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3YxMjM0MTE3Mzk=,size_16,color_FFFFFF,t_70)
+![img](../assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3YxMjM0MTE3Mzk=,size_16,color_FFFFFF,t_70.png)
 
 #### 6.为什么要使用线程池？直接new个线程不是很舒服？
 
@@ -50,8 +44,6 @@ sleep() 方法给其他线程运行机会时不考虑线程的优先级，因此
 
 2. 提高响应速度。当任务到达时，任务可以不需要等到线程创建就能立即执行。
 3. 增加线程的可管理型。线程是稀缺资源，使用线程池可以进行统一分配，调优和监控。
-
- 
 
 #### 7.线程池的核心属性有哪些？
 
@@ -67,11 +59,9 @@ handler（拒绝策略）：往线程池添加任务时，将在下面两种情�
 
 keepAliveTime（保持存活时间）：如果线程池当前线程数超过 corePoolSize，则多余的线程空闲时间超过 keepAliveTime 时会被终止。 
 
-
-
 #### 8.说下线程池的运作流程
 
-![img](https://img-blog.csdnimg.cn/20200608092639652.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3YxMjM0MTE3Mzk=,size_16,color_FFFFFF,t_70)
+![img](../assets/20200608092639652.png)
 
 #### 9.线程池有哪些拒绝策略？
 
@@ -96,6 +86,7 @@ CallerRunsPolicy：调用者运行策略。在调用者线程中执行该任务�
 * execute直接抛出异常之后线程就死掉了，submit保存异常线程没有死掉，因此execute的线程池可能会出现没有意义的情况，因为线程没有得到重用。而submit不会出现这种情况。
 
 
+
 ### 并发编程篇
 
 #### 1.死锁与活锁的区别，死锁与饥饿的区别？
@@ -110,7 +101,7 @@ CallerRunsPolicy：调用者运行策略。在调用者线程中执行该任务�
 
 2）活锁可能自行解开，死锁不能自行解开。
 
-**饥饿：一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执**行的状态。
+**饥饿：一个或者多个线程因为种种原因无法获得所需要的资源，导致一直无法执行**的状态。
 
 **Java** **中导致饥饿的原因：**
 
@@ -142,19 +133,21 @@ public class Test {
 		public void m2() {
     		String value = threadLocal.get();
     		// 使用
-    
+   			......
     		// 使用完清除
     		threadLocal.remove();
 		}
 }
 ```
+ ![ThreadLocal弱引用](../assets/v2-3923406319c1fe3c6656aeda7d7de121_1440w.png)
+
 [ThreadLocal使用与原理](https://juejin.cn/post/6959333602748268575)
 
 #### 3.协程/纤程是什么？
 
 可以理解为轻量级线程，或用户线程(区别操作系统内核线程)
 
-是应用曾的一种抽象，抽象出更细颗粒度的计算单元，虚拟出一种轻量化线程模型，解决线程切换带来的问题。 
+是应用层的一种抽象，抽象出更细颗粒度的计算单元，虚拟出一种轻量化线程模型，解决线程切换带来的问题。 
 
 #### 4.synchronized 和 Lock 的区别
 
@@ -168,11 +161,11 @@ public class Test {
 
 Mark Word 在32位 [JVM](https://so.csdn.net/so/search?q=JVM&spm=1001.2101.3001.7020) 中：
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/139a6b653a4341918622aa04d6a2432b.png)
+![在这里插入图片描述](../assets/139a6b653a4341918622aa04d6a2432b.png)
 
 Mark Word 在64位 JVM 中：
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/4337760476214560b55302192663fa1f.png)
+![在这里插入图片描述](../assets/4337760476214560b55302192663fa1f.png)
 
 #### 5.死锁形成的四个条件
 
@@ -189,9 +182,9 @@ Mark Word 在64位 JVM 中：
 
 预防死锁的方式就是打破四个必要条件中的任意一个即可。
 
-1）打破互斥条件：在系统里取消互斥。若资源不被一个进程独占使用，那么死锁是肯定不会发生的。但一般来说在所列的四个条件中，“互斥”条件是无法破坏的。因此，在死锁预防里主要是破坏其他几个必要条件，而不去涉及破坏“互斥”条件。。
+1）打破互斥条件：在系统里取消互斥。若资源不被一个进程独占使用，那么死锁是肯定不会发生的。但一般来说在所列的四个条件中，“互斥”条件是无法破坏的。因此，在死锁预防里主要是破坏其他几个必要条件，而不去涉及破坏“互斥”条件。
 
-2）打破请求和保持条件：1）采用资源预先分配策略，即进程运行前申请全部资源，满足则运行，不然就等待。 2）每个进程提出新的资源申请前，必须先释放它先前所占有的资源。
+2）打破请求和保持条件：①采用资源预先分配策略，即进程运行前申请全部资源，满足则运行，不然就等待。②每个进程提出新的资源申请前，必须先释放它先前所占有的资源。
 
 3）打破不可剥夺条件：当进程占有某些资源后又进一步申请其他资源而无法满足，则该进程必须释放它原来占有的资源。
 
@@ -302,7 +295,7 @@ static class Worker extends Thread {
 多线程的环境下修改了节点的value和新增了节点对于其他线程是可见的
 
 
-```    
+```    java
    static class Node<K,V> implements Map.Entry<K,V> {
         final int hash;
         final K key;
@@ -313,20 +306,39 @@ static class Worker extends Thread {
     static final <K,V> Node<K,V> tabAt(Node<K,V>[] tab, int i) {
         return (Node<K,V>)U.getObjectVolatile(tab, ((long)i << ASHIFT) + ABASE);
     }
-
 ```
 
 #### 9.为什么有Volatile，Volatile的使用需要注意些什么？
 
-Volatile的存在是解决可见性问题的，当多个线程同时访问或操作一个共享对象，跨cpu执行时修改不会立即同步到其他cpu。
-
-就需要Volatile来显示的控制，共享对象变更的及时同步。
+Volatile的存在是解决可见性问题的，当多个线程同时访问或操作一个共享对象，跨cpu执行时修改不会立即同步到其他cpu，就需要Volatile来显式的控制，共享对象变更的及时同步。
 
 使用时需要注意：1.Volatile不能保证完全原子性（如i++）。
 
-TODO：展开到内存栅栏更深处
+#### 10.DCL单例模式中，为什么要加volatile
+DCL：double check lock双重检查锁
+https://juejin.cn/post/7102222154518757383
 
-#### 10.你了解读写锁吗?
+#### 11.类锁和对象的区别
+
+[请说一下类锁和和对象锁的区别](https://www.cnblogs.com/fengzheng/p/12066239.html)
+
+类锁：
+类锁是加载类上的，而类信息是存在 JVM 方法区的，并且整个 JVM 只有一份，方法区又是所有线程共享的，所以类锁是所有线程共享的。
+
+使用类锁的方式有如下方式：
+* 锁住类中的静态变量。因为静态变量和类信息一样也是存在方法区的并且整个 JVM 只有一份，所以加在静态变量上可以达到类锁的目的。
+* 直接在静态方法上加 synchronized。因为静态方法同样也是存在方法区的并且整个 JVM 只有一份，所以加在静态方法上可以达到类锁的目的。
+* 锁住 xxx.class。
+* 类锁是所有线程共享的锁，所以同一时刻，只能有一个线程使用加了锁的方法或方法体，不管是不是同一个实例。
+
+对象锁：
+修饰一个对象，同一类型不同对象之间，是不同的锁
+* 修饰一个非静态成员变量
+* 修饰一个非静态方法
+* 修饰一个非静态代码块
+* synchronized(this)
+
+#### 12.你了解读写锁吗?
 
 读写锁内部有读锁写锁两把锁
 
@@ -359,9 +371,9 @@ TODO：展开到内存栅栏更深处
 
 细节上状态的保存动作是把状态信息从cpu计数器以及最近缓存往下级缓存和主存更新，装载则是反过程。
 
-以及涉及到操作系统就绪队列的调整，会存在用户态和内核态的切换（为了避免进一步深入问，cpu调度策略和就绪队列，如果没信心深入可以不提此点）
+以及涉及到操作系统就绪队列的调整，会存在用户态和内核态的切换
 
-所以上下文切换是一种大开销动作，尽量避免不必要的切换。
+所以上下文切换是一种大开销动作，尽量避免不必要的切换
 
 造成上下文切换的一些主动因素，就是一些锁的阻塞，线程的sleep主动让出cup使用权等。
 
@@ -381,25 +393,6 @@ TODO：展开到内存栅栏更深处
  **今年9月份发布的JDK19 里已经把虚拟线程列为JEP（JDK增强建议）**
 
 
-#### 为何stop()和suspend()方法不推荐使用
-
-stop()方法作为一种粗暴的线程终止行为，在线程终止之前没有对其做任何的清除操作，因此具有固有的不安全性。 用Thread.stop()方法来终止线程将会释放该线程对象已经锁定的所有监视器。如果以前受这些监视器保护的任何对象都处于不连贯状态，那么损坏的对象对其他线程可见，这有可能导致不安全的操作。 由于上述原因，因此不应该使用stop()方法，而应该在自己的Thread类中置入一个标志，用于控制目标线程是活动还是停止。如果该标志指示它要停止运行，可使其结束run（）方法。如果目标线程等待很长时间，则应使用interrupt()方法来中断该等待。
-
-suspend()方法 该方法已经遭到反对，因为它具有固有的死锁倾向。调用suspend（）方法的时候，目标线程会停下来。如果目标线程挂起时在保护关键系统资源的监视器上保持有锁，则在目标线程重新开始以前，其他线程都不能访问该资源。除非被挂起的线程恢复运行。对任何其他线程来说，如果想恢复目标线程，同时又试图使用任何一个锁定的资源，就会造成死锁。由于上述原因，因此不应该使用suspend（）方法，而应在自己的thread类中置入一个标志，用于控制线程是活动还是挂起。如果标志指出线程应该挂起，那么用wait（）方法命令其进入等待状态。如果标志指出线程应当恢复，那么用notify()方法重新启动线程。
-
-#### Threadlocal
-
-ThreadLocal意为线程本地变量，作用是对资源进行隔离，线程级隔离。
-
-该变量对其他线程而言是隔离的，也就是说该变量是当前线程独有的变量。ThreadLocal为变量在每个线程中都创建了一个副本，那么每个线程可以访问自己内部的副本变量。
-
-每一个线程内部都有一个ThreadLocalMap类型的threadLocals属性，此属性负责具体线程本地变量的存储。
-
-延伸：ThreadLocalMap 内部是采用一个弱引用对象，来存储threadlocal对象，以达到在业务代码使用完之后，gc能够即时清理。
-
-![ThreadLocal弱引用](https://picx.zhimg.com/v2-3923406319c1fe3c6656aeda7d7de121_1440w.jpg?source=172ae18b)
-
-[ThreadLocal和SimpleDateFormat]https://blog.jrwang.me/2016/java-simpledateformat-multithread-threadlocal/
 
 
 ### 并发编程篇
@@ -441,7 +434,7 @@ Sysnchronized锁升级过程
 ![img](https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimages2.10qianwan.com%2F10qianwan%2F20180411%2Fb_0_201804110626062944.jpg&refer=http%3A%2F%2Fimages2.10qianwan.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1667375946&t=749cff6559c8c260b05efb53a0863eb2)
 
 
-![在这里插入图片描述](https://img-blog.csdnimg.cn/1e6582ac17844ca9bd4426efd52edda8.png)
+![在这里插入图片描述](../assets/1e6582ac17844ca9bd4426efd52edda8.png)
 
 
 
@@ -484,9 +477,7 @@ Objectmonitor中的关键词
 
 cxq是一个单向链表。被挂起线程等待重新竞争锁的链表, monitor 通过CAS将包装成ObjectWaiter写入到列表的头部。为了避免插入和取出元素的竞争，所以Owner会从列表尾部取元素。
 
-![img](https:////upload-images.jianshu.io/upload_images/18113429-62551fe64ddc79bf.jpg?imageMogr2/auto-orient/strip|imageView2/2/w/597/format/webp)
-
-重量级锁3.jpg
+ ![img](../assets/18113429-62551fe64ddc79bf.png)
 
 
 
@@ -535,19 +526,15 @@ EntryList跟cxq的区别
 3. 根据不同的策略设置一个OnDeckThread
 
 
-![img](https://img-blog.csdnimg.cn/20210815163352506.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM0NDE2MTkx,size_16,color_FFFFFF,t_70)
+![img](../assets/20210815163352506.png)
 
-![img](https://img2020.cnblogs.com/blog/1559627/202105/1559627-20210511154125098-1137705222.png)
+![img](../assets/1559627-20210511154125098-1137705222.png)
 
 参考资料: 锁升级 https://blog.csdn.net/weixin_36114346/article/details/125280063
 
 ​				重量级锁：https://www.jianshu.com/p/60ea4b0d4487
 
 ​				批量重偏向 https://blog.51cto.com/u_11720620/5198494
-
-
-
-#### 死锁与活锁的区别，死锁与饥饿的区别？
 
 
 
