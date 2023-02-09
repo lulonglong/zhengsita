@@ -353,6 +353,15 @@ Consumer 实例增加的情况很好理解，当我们启动一个配置有相�
 partion->segment>index->log
 
 
+### Kafka数据同步
+```
+>>LEO:每个分区中最后一条消息的下一个位置（offset），分区的每个副本都有自己的LEO。
+>>HW(high watermarker:高水位线):核心思想为所有HW之前的数据都是已经提交的，HW之前的数据对consumer可见。
+>>ISR(in-sync-replicas):正在同步的副本集合，一个时间范围，例如10s内向Leader副本同步过，该时间范围通过replica.lag.time.max.ms控制。
+```
+ ![](assets/v2-944238b824c604d817109c0b1a51469d_b.png)		
+
+​		kafka的0.11版本前采用高水位的模式进行数据同步，但是这种同步方式存在数据丢失以及数据不一致的的问题。鉴于这些原因，Kafka 0.11引入了leader epoch来取代HW值。Leader端多开辟一段内存区域专门保存leader的epoch信息所谓leader epoch实际上是一对值：（epoch，offset)。epoch表示leader的版本号，从0开始，当leader变更过1次时epoch就会+1，而offset则对应于该epoch版本的leader写入第一条消息的位移。这里只介绍了HW带来的问题和epoch解决方案。详细内容参考这篇文章：https://www.cnblogs.com/huxi2b/p/7453543.html
 
 
 ## 参考文档
@@ -362,3 +371,5 @@ partion->segment>index->log
 [Kafka学习之路](https://www.cnblogs.com/qingyunzong/category/1212387.html)
 [Kafka三高架构设计剖析](https://z.itpub.net/article/detail/E543E327B1D601F5EB8A6D4E87148E2B)
 [消费者组重平衡能避免吗](https://learn.lianglianglee.com/%E4%B8%93%E6%A0%8F/Kafka%E6%A0%B8%E5%BF%83%E6%8A%80%E6%9C%AF%E4%B8%8E%E5%AE%9E%E6%88%98/17%20%20%E6%B6%88%E8%B4%B9%E8%80%85%E7%BB%84%E9%87%8D%E5%B9%B3%E8%A1%A1%E8%83%BD%E9%81%BF%E5%85%8D%E5%90%97%EF%BC%9F.md)
+[kafka数据同步（高水位&Leader Epoch）](https://blog.csdn.net/zf18234031156/article/details/122586421)
+[Kafka水位(high watermark)与leader epoch的讨论](https://www.cnblogs.com/huxi2b/p/7453543.html)
