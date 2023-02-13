@@ -1,5 +1,3 @@
-UserToken方案
-
 ## 获取token
 前端向后端接口请求获取token，user把token用AES加密后经过base64，和动态盐一块下发
 
@@ -9,7 +7,7 @@ UserToken方案
 3、验证无误后，在发起dubbo调用，调用业务服务
 
 ## token续期
-1、客户端每天发发起一次token续期操作
+1、客户端每天发起一次token续期操作
 2、token过期后，调用网关接口会失败，此时需要前端重新登录
 
 ## token包含的信息
