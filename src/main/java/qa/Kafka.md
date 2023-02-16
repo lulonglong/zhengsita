@@ -195,7 +195,7 @@ Producer、Broker、Consumer 要使用相同的压缩算法, 在 Producer 向 Br
 对于生产者数据传输导致的数据丢失主常见情况是生产者发送消息给 Kafka，由于网络等原因导致消息丢失，对于这种情况也是通过在 producer 端设置 acks=all 来处理，这个参数是要求 leader 接收到消息后，需要等到所有的 follower 都同步到了消息之后，才认为本次写成功了。如果没满足这个条件，生产者会自动不断的重试。
 
 ### Kafka 导致的消息丢失
-Kafka 导致的数据丢失一个常见的场景就是 Kafka 某个 broker 宕机，，而这个节点正好是某个 partition 的 leader 节点，这时需要重新重新选举该 partition 的 leader。如果该 partition 的 leader 在宕机时刚好还有些数据没有同步到 follower，此时 leader 挂了，在选举某个 follower 成 leader 之后，就会丢失一部分数据。
+Kafka 导致的数据丢失一个常见的场景就是 Kafka 某个 broker 宕机，而这个节点正好是某个 partition 的 leader 节点，这时需要重新重新选举该 partition 的 leader。如果该 partition 的 leader 在宕机时刚好还有些数据没有同步到 follower，此时 leader 挂了，在选举某个 follower 成 leader 之后，就会丢失一部分数据。
 
 对于这个问题，Kafka 可以设置如下 4 个参数，来尽量避免消息丢失：
 * 给 topic 设置 replication.factor 参数：这个值必须大于 1，要求每个 partition 必须有至少 2 个副本；
