@@ -10,15 +10,11 @@
 
 ![img](assets/6859787.png)
 
-
-
 - Container**：** 服务运行容器，负责加载、运行服务提供者。
 - Provider**：** 暴露服务的服务提供方，会向注册中心注册自己提供的服务。
 - Consumer**：** 调用远程服务的服务消费方，会向注册中心订阅自己所需的服务。
 - Registry**：** 服务注册与发现的注册中心。注册中心会返回服务提供者地址列表给消费者。
 - Monitor： 统计服务的调用次数和调用时间的监控中心。服务消费者和提供者会定时发送统计数据到监控中心。
-
-
 
 ## 3. Dubbo 中的 Invoker 概念了解么？
 
@@ -27,12 +23,9 @@
 - 我们需要调用一个远程方法，我们需要动态代理来屏蔽远程调用的细节吧！我们屏蔽掉的这些细节就依赖对应的 `Invoker` 实现， `Invoker` 实现了真正的远程服务调用
 - 这里顺便解释下Exporter和Invoker的区别，Exporter持有Invoker的实例，Exporter是暴露对象，是起到暴露和撤回暴露作用的
 
-
-
 ## 4. Dobbo的分层架构(工作原理)
 
 ![img](assets/cea5061c7b8b2a584cc1889cf1581fdb_1440w.png)
-
 
 
 - Service业务层：就是我们写代码的层，我们使用rpc只需要关注该层就行，主要是定义接口和实现类。
@@ -45,7 +38,6 @@
 - exchange 信息交换层：封装请求响应模式，同步转异步，以 `Request`, `Response` 为中心。
 - transport 网络传输层：抽象 mina 和 netty 为统一接口，以 `Message` 为中心。
 - serialize 数据序列化层 ：对需要在网络传输的数据进行序列化。
-
 
 
 ## 5. Dubbo 的 SPI 机制了解么？为什么 Dubbo 不用 JDK的 SPI，而是要自己实现?
@@ -74,9 +66,7 @@
   jdk=org.apache.dubbo.common.compiler.support.JdkCompiler
   javassist=org.apache.dubbo.common.compiler.support.JavassistCompiler
   ```
-
-
-
+  
 ## 6. 如何扩展 Dubbo 中的默认实现？
 
 - 比如说我们想要实现自己的负载均衡策略，我们创建对应的实现类 `XxxLoadBalance` 实现 `LoadBalance` 接口或者 `AbstractLoadBalance` 类。
@@ -90,8 +80,6 @@ public class XxxLoadBalance implements LoadBalance {
  		}
 }
 ```
-
-
 
 ## 7. 服务暴露**：**生成代理类**，**将信息注册到ZK
 
@@ -141,15 +129,11 @@ public class XxxLoadBalance implements LoadBalance {
 2. 在调用之前，就会进行智能容错和负载均衡。
 3. 首先客户端调用接口的某个方法，实际调用的是代理类，代理类会通过 cluster 从 directory(invoker的集合) 中获取一堆 invokers(如果有一堆的话)，然后进行 router 的过滤（其中看配置也会添加 mockInvoker 用于服务降级），然后再通过 SPI 得到 loadBalance 进行一波负载均衡。
 
-
-
 ## 10. 容错机制：先负载均衡获得一个invoker，调用失败进行容错，再负载均衡。
 
 - 首先在服务引入的时候，将多个远程调用都塞入 Directory 中，然后通过 Cluster 来封装这个目录，封装的同时提供各种容错功能，比如 FailOver、FailFast 等等，最终暴露给消费者的就是一个 invoker。
 
 - 然后消费者调用的时候会目录里面得到 invoker 列表，当然会经过路由的过滤，得到这些 invokers 之后再由 loadBalance 来进行负载均衡选择一个 invoker，最终发起调用。
-
-  
 
 ## 11. dubbo常见的容错机制
 
@@ -179,9 +163,6 @@ public class XxxLoadBalance implements LoadBalance {
 
   - 通常用于实时性要求较高的读操作，但需要浪费更多服务资源。
 
-    
-
-
 ## 12. Dubbo 为什么默认用 Javassist？
 ```
 注意，这里说的是默认使用，dubbo也有jdk动态代理的实现
@@ -191,13 +172,7 @@ public class XxxLoadBalance implements LoadBalance {
 - 其他常见的动态代理： JDK 的动态代理、ASM、cglib。
   - ASM 比 Javassist 更快，但是没有快一个数量级，而Javassist 只需用字符串拼接就可以生成字节码，而 ASM 需要手工生成，成本较高，比较麻烦。
   
-    
-    
-    
-
-
 ## 13. Dubbo 支持哪些序列化方式?
-
 - JDK 自带的序列化：不支持跨语言调用 ；性能差
 - JSON：性能差
 - ProtoBuf ：支持跨语言
@@ -205,8 +180,6 @@ public class XxxLoadBalance implements LoadBalance {
 - Protostuff：支持跨语言
 - Kryo：新引入的，只支持JAVA
 - FST：新引入的，只支持JAVA
-
-
 
 ## 14. Dubbo 支持哪些协议，每种协议的应用场景，优缺点？
 
@@ -222,19 +195,13 @@ public class XxxLoadBalance implements LoadBalance {
 
 **6、** Redis：基于 Redis 实现的 RPC 协议
 
-
-
 ## 15. 服务提供者能实现失效踢出是什么原理？
 
 服务失效踢出基于zookeeper的临时节点原理。
 
-
-
 ### 16. 服务调用是阻塞的吗？
 
 默认是阻塞的，可以异步调用，没有返回值的可以这么做。
-
-
 
 ## 17. Dubbo 怎么实现降级
 
@@ -259,24 +226,17 @@ Dubbo中服务降级如何实现的呢？主要四种方式：
 　　4、整合hystrix，后续介绍hystrix进行详细介绍。
 
 
-
 ### 18. Dubbo 的注册中心集群挂掉，发布者和订阅者之间还能通信么？
 
 可以通讯。启动 Dubbo 时，消费者会从 Zookeeper 拉取注册的生产者的地址接口等数据，缓存在本地。每次调用时，按照本地存储的地址进行调用。
-
-
 
 ### 19. Dubbo 和 Spring Cloud 的关系？
 
 Dubbo 是 SOA 时代的产物，它的关注点主要在于服务的调用，流量分发、流量监控和熔断。而 Spring Cloud 诞生于微服务架构时代，考虑的是微服务治理的方方面面，另外由于依托了 Spirng、Spirng Boot 的优势之上，两个框架在开始目标就不一致， Dubbo定位服务治理、 Spirng Cloud 是一个生态。
 
-
-
 ## 20. Dubbo默认使用什么注册中心，还有别的选择吗？
 
 推荐使用 Zookeeper 作为注册中心，还有 Redis、Multicast、Simple 注册中心，但不推荐。
-
-
 
 ## 21. Dubbo Monitor 实现原理是什么？
 
@@ -294,16 +254,12 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 
 5、SimpleMonitorService 还会使用一个含有1 个线程（ 线程名字：DubboMonitorTimer）的线程池每隔5min 钟， 将文件中的统计数据画成图表 
 
-
-
 ## 22. Dubbo 集群的负载均衡有哪些策略
 
 - RandomLoadBalance：随机。随机的选择一个。是Dubbo的**默认**负载均衡策略。(加权/不加权)
 - RoundRobinLoadBalance：轮询。轮询选择一个。(加权/不加权)
 - LeastActiveLoadBalance：最少活跃数。每个服务维护一个活跃数计数器。当A机器开始处理请求，该计数器加1，此时A还未处理完成。若处理完毕则计数器减1。而B机器接受到请求后很快处理完毕。那么A,B的活跃数分别是1，0。当又产生了一个新的请求，则选择B机器去执行(B活跃数最小)，这样使慢的机器A收到少的请求。
 - ConsistentHashLoadBalance：一致性哈希。相同参数的请求总是落在同一台机器上。
-
-
 
 ## 23. Dubbo 如何优雅停机？
 
@@ -355,8 +311,6 @@ Consumer 端在发起调用之前会先走filter 链； provider 端在接收到
 4. 系统关闭 
 5. 使用Kill pid命令干掉进程 
 
-
-
 ## 24. dubbo客户端和服务端线程模型是怎样的？
 
  ![img](assets/Q1NETiBAamVycnlfZHl5.png)
@@ -370,8 +324,6 @@ direct： 所有消息都不派发到Server线程池，全部在 IO 线程上直
 message ：只有请求响应消息派发到Server线程池，其它连接断开事件，心跳等消息，直接在 IO 线程上执行。
 execution： 只有请求消息派发到Server线程池，不含响应，响应和其它连接断开事件，心跳等消息，直接在 IO 线程上执行。
 connection： 在 IO 线程上，将连接断开事件放入队列，有序逐个执行，其它消息派发到线程池。
-
-
 
 ## 25. provider 有哪些属性
 
@@ -408,19 +360,16 @@ connection： 在 IO 线程上，将连接断开事件放入队列，有序逐�
 </bean>
 ```
 
-
-
 ## 26. consumer 有哪些属性
-
 ```
 与provider几乎相同
 ```
 
-
-
 ## 27. dubbo是如何发起一个调用的
-
 [《Dubbo系列》-Dubbo的服务调用过程](https://juejin.cn/post/6875847496082391053#heading-16)
 
+## 28. dubbo的泛化调用是什么原理
+```
 
+```
 

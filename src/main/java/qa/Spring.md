@@ -44,7 +44,7 @@ bean定义信息，包括class、构造函数以及属性等
 BeanPostProcessor常用子类：
 InstantiationAwareBeanPostProcessor：实例化前后的处理
 MergedBeanDefinitionPostProcessor：实例化时对bd的进一步丰富，@Autowired的应用
-AutoProxyCreator：在AOP中自动创建代理类
+AutoProxyCreator：在AOP中自动创建代理类，继承自InstantiationAwareBeanPostProcessor
 ```
  ![alt](assets/3470413121-2abed99e085c254a.png)
 
