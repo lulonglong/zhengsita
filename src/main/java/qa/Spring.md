@@ -170,7 +170,7 @@ Bean的创建过程会把实例化后的Bean通过ObjectFactory预先暴露出�
 >InstantiationAwareBeanPostProcessor接口
 		1.派生自BeanPostProcessor
 		2.在创建Bean时可修改bean的属性
-		3.在Bean的实例化前后做处理，AOP的实现就是借用此类返回了代理类
+		3.在Bean的实例化前后做处理，AOP的实现就是借用此类返回了代理类，但是是在初始化后做的
 ```
 
 19. Spring的自动装配
@@ -230,8 +230,8 @@ Aspect：对切点和增强的整体定义作为一个完整的切面定义
 1.入口是在配置文件中配置aop:aspectj-autoproxy标签开启AOP
 2.在spring-aop模块META-INF/spring.handlers文件中配置了自定义命名空间解析器，对应配置如下:
 http\://www.springframework.org/schema/aop=org.springframework.aop.config.AopNamespaceHandler。Spring会加载‘=’后边的配置类解析‘=’前边的命名空间
-3.通过AopNamespaceHandler解析<aop:aspectj-autoproxy />，注册自动代理创建类AnnotationAwareAspectJAutoProxyCreator，这个类是BeanPostProcessor的实现
-4.在Bean实例化阶段，才延迟触发自动代理创建类解析所有@Aspect注解类，提取PointCut和Advice信息，并不是在自动代里创建类实例化时解析所有@Aspect注解类
+3.通过AopNamespaceHandler解析<aop:aspectj-autoproxy />，注册自动代理创建类AnnotationAwareAspectJAutoProxyCreator，这个类是InstantiationAwareBeanPostProcessor的实现
+4.在Bean初始化后阶段，才延迟触发自动代理创建类解析所有@Aspect注解类，提取PointCut和Advice信息，并不是在自动代里创建类实例化时解析所有@Aspect注解类
 5.然后过滤Advice看是否需要对该Bean做AOP处理，如果需要则生成代理对象
 ```
 
