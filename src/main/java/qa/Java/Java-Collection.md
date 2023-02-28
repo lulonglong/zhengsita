@@ -422,7 +422,7 @@ LinkedHashMap维护了一个双向链表，有头尾节点，同时 LinkedHashMa
 ![alt](../assets/collection-34.png)
 
 ## 讲讲 TreeMap 怎么实现有序的？
-TreeMap 是按照 Key 的自然顺序或者 Comparator 的顺序进行排序，内部是通过红黑树来实现。所以要么 key 所属的类实现 Comparable 接口，或者自定义一个实现了 Comparator 接口的比较器，传给 TreeMap 用于 key 的比较。
+TreeMap 是按照 Key 的自然顺序或者 Comparator 的顺序进行排序，内部是通过红黑树来实现。所以要么 key 所属的类实现 Comparable 接口，或者自定义一个实现了 Comparator 接口的比较器，传给 TreeMap 用于 key 的比较。TreeSet是利用了TreeMap实现的。
 
 ![alt](../assets/collection-35.png)
 

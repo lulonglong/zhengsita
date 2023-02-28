@@ -123,8 +123,11 @@ Commit point：提交点，保存着所有segment列表
 在文档很多的情况下，我们想查找出存在指定单词的文档，这种方式与传统方式相反，所以叫反向索引也叫倒排索引。
 Mysql数据库中的二级索引其实也是反向的，通过字段值去找记录。但现在倒排索引专指使用词汇搜索文档的情况，所以mysql的二级索引不能称其为倒排索引。
    
-   底层结构如下图所示，Term Index 不存储所有的单词，只存储单词前缀，通过字典树找到单词所在的块，也就是单词的大概位置，再在块里二分查找，找到对应的单词，再找到单词对应的文档列表
+   底层结构如下图所示，Term Index 不存储所有的单词，只存储单词前缀，底层是Trie Tree，占用空间小可直接加载到内存。
+   lucene 在这里还做了两点优化，一是 term dictionary 在磁盘上面是分 block 保存的，一个 block 内部利用公共前缀压缩。比如都是 Ab 开头的单词就可以把 Ab 省去。二是 term index 在内存中是以 FST（finite state transducers）的数据结构保存的。有两点优势：①空间占用小。通过对词典中单词前缀和后缀的重复利用，压缩了存储空间。②查询速度快。O(len(str)) 的查询时间复杂度。
+   通过字典树找到单词所在的block，也就是单词的大概位置，再在块里二分查找，找到对应的单词，再找到单词对应的文档列表。
 ```
+<img src="assets/dd887268ac6c4ba3a2ab7c9dfb0a0ef1.png" style="zoom:60%;" />
  ![alt](assets/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzE2NTcwNjA3,size_16,color_FFFFFF,t_70.png)
 
 4. 详细说下Segment是个什么概念

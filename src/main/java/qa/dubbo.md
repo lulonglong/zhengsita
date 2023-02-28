@@ -369,7 +369,22 @@ connection： 在 IO 线程上，将连接断开事件放入队列，有序逐�
 [《Dubbo系列》-Dubbo的服务调用过程](https://juejin.cn/post/6875847496082391053#heading-16)
 
 ## 28. dubbo的泛化调用是什么原理
-```
+​		泛化调用的用法如下，底层是根据传入的接口配置，生成invoker，并生成GenericService代理类来调用invoker
+```java
+RegistryConfig registry = new RegistryConfig();
+//设置注册中心地址
+registry.setAddress(“”);
 
+ReferenceConfig<GenericService> reference = new ReferenceConfig<GenericService>();
+reference.setApplication(application);
+reference.setRegistry(registry);
+//接口名
+reference.setInterface("service.api.DataTableAuditManageService");
+reference.setGeneric(true);
+ReferenceConfigCache cache = ReferenceConfigCache.getCache();
+GenericService genericService = cache.get(reference);
+
+//调用
+Object result = genericService.$invoke("selectArAuditAccSensitiveSingleLogList", parameterTypes, new Object[]{params});
 ```
 
