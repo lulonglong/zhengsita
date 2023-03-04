@@ -119,7 +119,25 @@ innodb 1.0以后的版本实现的
 ```
 16. merge index是什么
 ```
-5.1版本之前一个查询只能使用一个索引，5.1开始可以同时使用多个二级索引。先通过索引取出主键整合后再回表
+5.1版本之前一个查询只能使用一个索引，5.1开始可以同时使用多个二级索引。先通过索引取出主键整合后再回表。
+使用merge index需要满足前提条件。不同的索引命中的记录是按照id排好序的，这样可以快速的整合，如果不是排好序的，那么因为排序是要花时间的，所以直接不走合并索引的形式。合并索引分了三种情况，下面一一列举：
+假设表table1，有key1二级索引，key2二级索引和part1，part2联合索引
+1.intersection索引合并
+1.1 select * from table1 where key1='a' and key2='b'; -- 走intersection索引合并，因为key1和key2查出来的值是按照id排序的
+1.2 select * from table1 where key1>'a' and key2='b'; -- 不走intersection索引合并，因为key1查出来的值不是按照id排序的
+1.3 select * from table1 where key1='a' and part1='b'; -- 不走intersection索引合并，因为part1查出来的值不是按照id排序的，只有part1，part2都来查的时候才能保证查出来的数据按照id排序。
+1.4 select * from table1 where key1='a' and id>100; -- 不走intersection索引合并，直接走索引下推
+
+2.union索引合并
+2.1 select * from table1 where key1='a' or key2='b'; -- 走union索引合并，因为key1和key2查出来的值是按照id排序的
+2.2 select * from table1 where key1>'a' or key2='b'; -- 不走union索引合并，因为key1查出来的值不是按照id排序的
+2.3 select * from table1 where key1='a' or part1='b'; -- 不走union索引合并，因为part1查出来的值不是按照id排序的，只有part1，part2都来查的时候才能保证查出来的数据按照id排序。
+2.4 select * from table1 where key1='a' or id>100; -- 走union索引合并
+
+3.sort-union索引合并
+针对union的情况，可以不满足查出来的数据是按照id排序的。这是一种额外优化的情况，会先做排序再合并。
+如2.2、2.3虽然不走union索引合并，但是可以走sort-union索引合并。为什么没有sort-intersection索引合并呢？因为考虑到取交集一般是每个索引查出来的量可能较大，通过交集才达到数据量减少的目的，每个索引查出来量大的话，排序会比较花时间（如果直接回表的话，可能会开销更大。这个要看设计者的取舍，innodb是不支持的，但是其他数据库例如MariaDB则支持了sort-intersection）。而union的查询方式往往是每个索引返回的数据并不多，所以可以排序后再合并。
+
 ```
 17. 前缀索引，优缺点
 ```

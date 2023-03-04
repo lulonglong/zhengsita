@@ -20,10 +20,10 @@
 * MAX_CAP
   * final，值为0x7fff
   * parallelism 的最大值
-  
 * SQMASK
-  * final，值为0x007e
-  * workQueues 数组最多64个偶数槽位
+  * final，值为0x007e，末尾是偶数。找共享队列的偶数槽位会用到
+* EMASK
+  * final，值为0x7fffffff，末尾是奇数。找工作队列的奇数槽位会用到
 * SCANNING  
   * 标记是否正在运行任务
 * LIFO_QUEUE
@@ -39,7 +39,13 @@
 * ctl 
   * 线程池的主要控制字段
   * long型(64位)，用来标识对工作线程进行添加、灭活、重新激活和对队列出列、入列操作。ctl 原子性地维护了活跃线程数、工作线程总数，和一个放置等待线程的队列
-  
+  * AC表示活跃线程数
+  * TC表示总线程数
+  * SS：栈顶工作线程状态和版本数（每一个线程在挂起时都会持有前一个等待线程所在工作队列的索引，由此构成一个等待的工作线程栈，栈顶是最新等待的线程），第一位表示状态 1：不活动(inactive)； 0：活动(active)，后15表示版本号，防止 ABA 问题
+  * ID: 栈顶工作线程所在工作队列的索引
+
+![](../assets/v2-eb24ac259334154958efabdf39475ae7_1440w.png)
+
 * runState
   * 运行状态锁，int型(32位)，只有 SHUTDOWN 状态是负数，其他都是整数，在并发环境更改状态必然要用到锁，ForkJoinPool 对线程池加锁和解锁分别由 lockRunState 和 unlockRunState 来实现
   * RSLOCK 线程池被锁定
@@ -139,40 +145,29 @@
 * array
   * ForkJoinTask<?>[]
   * 当前对象的任务, 初始化的时候不会进行分配，采用懒加载的方式
-
 * config
   * int
   * 用于存储线程池的index和model
-  
 * base
   * int
   * 下一个进行poll操作的索引
-  
 * top
   * int 
   * 下一个push操作的索引
-
 * owner
   * 当前工作队列的工作线程，共享模式下为null
-  
 * currentJoin
   * ForkJoinTask<?>[]
   * 正在等待Join的任务
-
 * currentSteal
   * ForkJoinTask<?>[]
   * 调用者偷来的任务
-  
 * growArray()
   * 首先是初始化，其次是判断，是否需要扩容，如果需要扩容则容量加倍
-
 * push()
   * push方法是提供给工作队列自己push任务来使用的，共享队列push任务是在外部externalPush和externalSubmit等方法来进行初始化和push
-  * 当队列中的任务数小于1的时候，才会调用signalWork()，这个地方一开始并不理解，实际上，我们需要注意的是，这个方法是专门提供给工作队列来使用的，那么这个条件满足的时候，说明工作队列空闲。如果这个条件不满足，那么工作队列中有很多任务需要工作队列来处理，就不会触发对这个队列的窃取操作
-
 * pop()
   * pop操作也仅限于工作线程，对于共享对立中则不允许使用pop方法。这个方法将按LIFO后进先出的方式从队列中
-
 * poll()
   * poll方法将从队列中按FIFO的方式取出task
 
@@ -256,7 +251,7 @@
             ForkJoinTask<?>[] a; int am, n, s;
             //判断q中的task数组是否为空，
             if ((a = q.array) != null &&
-                //am为q的长度 这是个固定值，如果这个值大于n n就是目前队列中的元素，实际实这里是判断队列是否有空余的位置
+                //am为q的长度 这是个固定值，如果这个值大于n n就是目前队列中的元素，实际这里是判断队列是否有空余的位置
                 (am = a.length - 1) > (n = (s = q.top) - q.base)) {
                 //j实际上是计算添加到workQueue中的index
                 int j = ((am & s) << ASHIFT) + ABASE;
@@ -266,7 +261,7 @@
                 U.putOrderedInt(q, QTOP, s + 1);
                 //以可见的方式将q的QLOCK改为0
                 U.putIntVolatile(q, QLOCK, 0);
-                //此处，如果队列中的任务小于等于1则通知其他worker来窃取。为什么当任务大于1的时候不通知。而且当没有任务的时候发通知岂不是没有意义？此处不太理解
+                //此处，如果队列中的任务小于等于1则通知其他worker来窃取。如果>1则说明之前就已经通知过了，当前任务还没被窃取完而已，没必要再次通知
                 if (n <= 1)
                     //这是个重点方法，通知其他worker来窃取
                     signalWork(ws, q);
@@ -425,13 +420,13 @@ private void externalSubmit(ForkJoinTask<?> task) {
  */
 final void signalWork(WorkQueue[] ws, WorkQueue q) {
     long c; int sp, i; WorkQueue v; Thread p;
-    //如果ctl为负数  ctl初始化的时候就会为负数 如果小于0  说明有任务需要处理
+    //ctl 小于零，说明活动的线程数 AC 不够
     while ((c = ctl) < 0L) {                       // too few active
-        //c为long，强转int 32位的高位都丢弃，此时如果没有修改过ctl那么低位一定为0 可参考前面ctl的推算过程，所以此处sp 为0 sp为0则说明没有空闲的worker
+        //取ctl的低32位，如果为0，说明没有等待的线程
         if ((sp = (int)c) == 0) {                  // no idle workers
-            //还是拿c与ADD_WORKER取& 如果不为0 则说明worker太少，需要新增worker
+            //取TC的高位，如果不等于0，则说明目前的工作着还没有达到并行度
             if ((c & ADD_WORKER) != 0L)            // too few workers
-                //通过tryAddWorker 新增worker
+                //添加 Worker，也就是说要创建线程了
                 tryAddWorker(c);
             break;
         }
@@ -577,6 +572,7 @@ private boolean createWorker() {
 
 #### runWorker()
 * 这是worker工作线程的执行方法。通过死循环，不断scan是否有任务，之后窃取这个任务进行执行
+* scan就是窃取的过程，逻辑是随机找一个位置，如果这个位置的队列有任务则窃取，没有任务就继续往后遍历，找到就窃取后停止遍历，如果找了两圈都没任务也停止（JDK1.8）
 
 ```java
 
